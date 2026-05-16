@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
-import { getCoolDownWarning, getMomentumStreak, useStore } from '@/components/store';
+import { getCoolDownWarning, getMomentumStreak, getSolarFlares, useStore } from '@/components/store';
 
 export default function HomePage() {
   const { blazes, branches, sparks, burners, actions, pathways } = useStore();
@@ -25,10 +25,7 @@ export default function HomePage() {
 
   const stageFlow = ['Spark', 'Ember', 'Fire', 'Blaze'].map((stage) => ({ stage, count: sparks.filter((s) => s.stage === stage).length }));
 
-  const mockSolar = [
-    { id: 'sf-1', title: 'Morning Capture Sprint', evidence: '3 Fire items started after short morning sessions', branch: 'Music' },
-    { id: 'sf-2', title: 'Publish Cadence Loop', evidence: '2 Blazes emerged when pathway confidence exceeded 75%', branch: 'Writing' }
-  ];
+  const solarSignals = getSolarFlares(sparks, blazes);
 
   return (
     <Layout>
@@ -90,14 +87,14 @@ export default function HomePage() {
 
         <Section title="Solar Flares">
           <div className="grid gap-3 sm:grid-cols-2">
-            {mockSolar.map((f) => (
-              <article key={f.id} className="rounded-xl border border-neon/20 bg-panelAlt p-4">
-                <h3 className="font-semibold">{f.title}</h3>
-                <p className="text-sm text-muted">{f.evidence}</p>
-                <p className="mt-1 text-xs text-neonDim">Related Branch: {f.branch}</p>
+            {solarSignals.length ? solarSignals.map((signal) => (
+              <article key={signal} className="rounded-xl border border-neon/20 bg-panelAlt p-4">
+                <h3 className="font-semibold">Possible Sun Engine</h3>
+                <p className="text-sm text-muted">{signal}</p>
+                <p className="mt-1 text-xs text-neonDim">Related Branch: pattern-derived</p>
                 <button className="mt-3 rounded-lg border border-neon/40 px-3 py-1 text-sm text-neon">Create Sun</button>
               </article>
-            ))}
+            )) : <Empty text="No flare patterns yet." />}
           </div>
         </Section>
 
