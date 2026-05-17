@@ -1,8 +1,8 @@
-export type Stage = 'Spark' | 'Ember' | 'Fire' | 'Blaze';
-export type Status = 'new' | 'active' | 'cooling' | 'frozen' | 'archived' | 'killed';
+export type Stage = 'Spark' | 'Ember' | 'Flame' | 'Blaze';
+export type Status = 'new' | 'active' | 'cooling' | 'frozen' | 'killed';
 export type PathwayStatus = 'possible' | 'chosen' | 'active' | 'completed' | 'frozen';
 
-export type TimelineBucket = 'today' | 'this_week' | 'this_month' | 'later';
+export type TimelineBucket = 'today' | 'tomorrow' | 'this_week' | 'this_month' | 'later';
 
 export type BranchRole = 'Driver' | 'Audience Builder' | 'Strategic Flagship' | 'Maintenance' | 'Support';
 export type Branch = { id: string; name: string; focus: string; strategicWeight: number; role: BranchRole; frozen?: boolean; tags?: string[]; currentGoalId?: string };
@@ -13,9 +13,11 @@ export type Goal = {
   title: string;
   pillarId: string;
   status: GoalStatus;
-  timeline: TimelineBucket;
+  scale: 'year' | 'month' | 'week' | 'day';
+  priorityWeight?: number;
+  startDate?: string;
   dueDate?: string;
-  currentObjective?: string;
+  currentAction?: string;
 };
 
 export type SparkAttachmentType = 'image' | 'audio' | 'video' | 'file' | 'link' | 'note';
@@ -38,16 +40,17 @@ export type SparkItem = {
   kind: string;
   branchId: string;
   goalId?: string;
-  timeline?: TimelineBucket;
+  scheduleBucket?: TimelineBucket;
   dueDate?: string;
-  currentObjective?: string;
+  currentAction?: string;
   stage: Stage;
   status: Status;
   heatScore: number;
   updatedAt: string;
   last_touched_at: string;
   notes?: string;
-  nextMove?: string;
+  currentAction?: string;
+  manualPin?: boolean;
 };
 
 export type Pathway = {
@@ -58,7 +61,8 @@ export type Pathway = {
   confidence: number;
   status: PathwayStatus;
   branchId?: string;
-  nextMove?: string;
+  currentAction?: string;
+  manualPin?: boolean;
   readinessNote?: string;
   valueTags?: string[];
   last_touched_at: string;

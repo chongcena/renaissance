@@ -8,6 +8,7 @@ const nav = [
   { key: 'capture', label: 'Capture', href: '/add-spark' },
   { key: 'vault', label: 'Vault', href: '/vault' },
   { key: 'pillars', label: 'Pillars', href: '/branches' },
+  { key: 'goals', label: 'Goals', href: '/goals' },
   { key: 'progress', label: 'Progress', href: '/stats' }
 ] as const;
 
