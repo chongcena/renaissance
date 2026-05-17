@@ -25,8 +25,8 @@ export const blaze_logs: BlazeLog[] = [
 ];
 
 export const action_log: ActionLog[] = [
-  { id: 'ac-01', action_type: 'route', action: 'Routed Spark to 2 pathways', date: '2026-05-15', countsForStreak: true, branchId: 'br-01', sparkId: 'sp-100' },
-  { id: 'ac-02', action_type: 'progress', action: 'Completed Heat Check on Writing branch', date: '2026-05-14', countsForStreak: true, branchId: 'br-02', sparkId: 'sp-101' },
+  { id: 'ac-01', action_type: 'route', action: 'Saved form to 2 pathways', date: '2026-05-15', countsForStreak: true, branchId: 'br-01', sparkId: 'sp-100' },
+  { id: 'ac-02', action_type: 'progress', action: 'Completed Priority Check on Writing Pillar', date: '2026-05-14', countsForStreak: true, branchId: 'br-02', sparkId: 'sp-101' },
   { id: 'ac-03', action_type: 'create_blaze', action: 'Logged Blaze and minted Burner', date: '2026-05-13', countsForStreak: true, branchId: 'br-01', sparkId: 'sp-100' }
 ];
 
