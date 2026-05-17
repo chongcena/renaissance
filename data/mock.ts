@@ -21,9 +21,9 @@ export const blaze_logs: BlazeLog[] = [
 ];
 
 export const action_log: ActionLog[] = [
-  { id: 'ac-01', action: 'Routed Spark to 2 pathways', date: '2026-05-15' },
-  { id: 'ac-02', action: 'Completed Heat Check on Writing branch', date: '2026-05-14' },
-  { id: 'ac-03', action: 'Logged Blaze and minted Burner', date: '2026-05-13' }
+  { id: 'ac-01', action_type: 'route', action: 'Routed Spark to 2 pathways', date: '2026-05-15', countsForStreak: true },
+  { id: 'ac-02', action_type: 'progress', action: 'Completed Heat Check on Writing branch', date: '2026-05-14', countsForStreak: true },
+  { id: 'ac-03', action_type: 'create_blaze', action: 'Logged Blaze and minted Burner', date: '2026-05-13', countsForStreak: true }
 ];
 
 export const burner_ledger: BurnerLedger[] = [
