@@ -4,7 +4,7 @@ import Layout from '@/components/Layout';
 import { useStore } from '@/components/store';
 import type { Branch, BranchRole } from '@/data/types';
 import { getBranchAttention } from '@/lib/analytics';
-import { PILLAR_COLORS, getPillarColor, pillarColorStyles } from '@/lib/ui';
+import { PILLAR_COLORS, getPillarColor, getPillarColorStyles } from '@/lib/ui';
 
 const ROLES: BranchRole[] = ['Driver', 'Audience Builder', 'Strategic Flagship', 'Maintenance', 'Support'];
 
@@ -22,7 +22,7 @@ export default function PillarsPage() {
       <select value={color} onChange={(e)=>setColor(e.target.value as any)} className='rounded bg-bg px-3 py-2'>{PILLAR_COLORS.map((c)=><option key={c} value={c}>{c}</option>)}</select>
       <button className="rounded bg-neon px-4 py-2 font-semibold text-bg">Add Pillar</button>
     </form>
-    <div className="grid gap-3 sm:grid-cols-2">{branches.map((branch) => {const st=pillarColorStyles[getPillarColor(branch)]; const attention = branchAttention.find((item) => item.id === branch.id); const isEditing = editing === branch.id;
+    <div className="grid gap-3 sm:grid-cols-2">{branches.map((branch) => {const st=getPillarColorStyles(getPillarColor(branch)); const attention = branchAttention.find((item) => item.id === branch.id); const isEditing = editing === branch.id;
       return <article key={branch.id} className={`rounded-xl border border-neon/40 bg-panelAlt/85 p-4 ${st.glow}`}><h3 className="text-lg font-semibold">{isEditing ? <input value={(draft.name ?? branch.name)} onChange={(e)=>setDraft((d)=>({ ...d, name: e.target.value }))} className="w-full rounded bg-bg px-2 py-1" /> : branch.name}</h3>
       <p className='text-xs text-muted'>{isEditing?<select value={(draft.color ?? branch.color ?? 'neutral')} onChange={(e)=>setDraft((d)=>({...d,color:e.target.value as any}))} className='rounded bg-bg px-2 py-1'>{PILLAR_COLORS.map((c)=><option key={c}>{c}</option>)}</select>:`Color: ${branch.color ?? 'neutral'}`}</p>
       <p className="mt-1 text-xs text-neonDim">Pillar Focus: {isEditing ? <select value={(draft.role ?? branch.role)} onChange={(e)=>setDraft((d)=>({ ...d, role: e.target.value as BranchRole }))} className="ml-2 rounded bg-bg px-2 py-1 text-xs">{ROLES.map((r)=><option key={r} value={r}>{r}</option>)}</select> : branch.role}</p>
