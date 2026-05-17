@@ -11,6 +11,7 @@ type Store = {
   routeSpark: (sparkId: string, payload?: Partial<Pathway> & { title?: string; nextMove?: string; branchId?: string }) => void; activateFire: (sparkId: string, pathwayId: string) => { ok: boolean; message?: string }; freezeSpark: (sparkId: string) => void;
   updateSpark: (id: string, patch: Partial<SparkItem>) => void; addSparkAttachments: (sparkId: string, payload: Omit<SparkAttachment, 'id' | 'sparkId' | 'createdAt'>[]) => void; removeSparkAttachment: (attachmentId: string) => void; addPathway: (sparkId: string, lane: string, extra?: Partial<Pathway>) => void; updatePathway: (id: string, patch: Partial<Pathway>) => void;
   releaseBlaze: (sparkId: string, title: string, outputType: string, pathwayId?: string, notes?: string) => void;
+  addActionLog: (action_type: ActionLog['action_type'], action: string, countsForStreak?: boolean, meta?: { branchId?: string; sparkId?: string }) => void;
 };
 const Ctx = createContext<Store | null>(null);
 const today = () => new Date().toISOString().slice(0, 10);
@@ -37,6 +38,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     updatePathway: (pid, patch) => { const path=paths.find((p)=>p.id===pid); setPaths((p)=>p.map((i)=>i.id===pid?{...i,...patch,last_touched_at:today()}:i)); if(patch.nextMove!==undefined) appendAction('set_next_move',`Set Next Move: ${patch.nextMove || 'Cleared next move'}`); appendAction('progress',`Updated Pathway: ${path?.title ?? pid}`); },
     releaseBlaze: (sparkId,title,outputType,pathwayId,notes) => { const spark=sparks.find((s)=>s.id===sparkId); if(!spark) return; setBlazes((b)=>[{id:id('blz'),sparkId,title,outputType,pathwayId,notes,branchId:spark.branchId,releasedAt:today()},...b]); if(pathwayId){setPaths((p)=>p.map((x)=>x.id===pathwayId?{...x,status:'completed',last_touched_at:today()}:x));}
       setSparks((s)=>s.map((x)=>x.id===sparkId?{...x,stage:'Blaze',status:'active',updatedAt:today(),last_touched_at:today()}:x)); setBurners((b)=>[{id:id('bn'),event:'Earned',reason:`Released Blaze: ${title}`,date:today(),delta:1},...b]); appendAction('release',`Released Blaze: ${title}`,true,{sparkId,branchId:spark.branchId}); appendAction('create_blaze',`Created Blaze Log: ${title} (${outputType})`,true,{sparkId,branchId:spark.branchId}); }
+    , addActionLog: (action_type, action, countsForStreak = true, meta) => appendAction(action_type, action, countsForStreak, meta)
   }), [branches, sparks, attachments, paths, blazes, actions, burners]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
