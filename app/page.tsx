@@ -2,7 +2,7 @@
 import Layout from '@/components/Layout';
 import { useStore } from '@/components/store';
 import { getMomentumStreakSummary } from '@/lib/logic';
-import { derivePriorityChip, getPillarColor, pillarColorStyles } from '@/lib/ui';
+import { derivePriorityChip, getPillarColor, getPillarColorStyles } from '@/lib/ui';
 
 export default function HomePage() {
   const { sparks, actions, burners, goals, branches, blazes } = useStore();
@@ -12,7 +12,7 @@ export default function HomePage() {
   const todaySpark = sparks.find((s) => s.scheduleBucket === 'today' && s.currentAction && s.status !== 'frozen');
   const todayAction = todayGoal?.currentAction || todaySpark?.currentAction;
   const heroPriority = todaySpark ? derivePriorityChip(todaySpark, goals) : (todayGoal ? 'High Priority' : 'Low Priority');
-  const heroStyle = pillarColorStyles[getPillarColor(branches.find((b)=>b.id===todaySpark?.branchId || b.id===todayGoal?.pillarId))];
+  const heroStyle = getPillarColorStyles(getPillarColor(branches.find((b)=>b.id===todaySpark?.branchId || b.id===todayGoal?.pillarId)));
   const upNextSparks = sparks.filter((s) => s.status === 'active' && s.currentAction && s.id !== todaySpark?.id).slice(0, 4);
   const cooling = sparks.filter((s) => s.status === 'cooling').slice(0, 4);
   const recentSparks = sparks.slice(0, 4);

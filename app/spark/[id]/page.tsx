@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import Layout from '@/components/Layout';
 import { calculatePathwayReadiness, deriveSparkLifecycle } from '@/lib/logic';
 import { useStore } from '@/components/store';
-import { derivePriorityChip, getPillarColor, pillarColorStyles } from '@/lib/ui';
+import { derivePriorityChip, getPillarColor, getPillarColorStyles } from '@/lib/ui';
 
 type AnalysisPathway = { title: string; outputType: string; reason: string; suggestedNextMove: string };
 type AnalysisResult = {
@@ -31,7 +31,7 @@ export default function SparkDetailPage() {
   const routes = pathways.filter((p) => p.sparkId === id); const sparkBlazes = blazes.filter((b) => b.sparkId === id); const branch = branches.find((b) => b.id === spark.branchId);
   
   const priority = derivePriorityChip(spark, []);
-  const pillarStyle = pillarColorStyles[getPillarColor(branch)];
+  const pillarStyle = getPillarColorStyles(getPillarColor(branch));
 
   const sparkAttachments = attachments.filter((a)=>a.sparkId===spark.id);
   const startEdit = () => { setDraft({ title: spark.title, kind: spark.kind, branchId: spark.branchId, notes: spark.notes ?? '', currentAction: spark.currentAction ?? '', status: spark.status, stage: spark.stage }); setEditing(true); };
