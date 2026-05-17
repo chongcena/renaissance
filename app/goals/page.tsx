@@ -70,8 +70,10 @@ export default function GoalsPage() {
   };
 
   return <Layout><section className='space-y-4'>
-    <h2 className='text-xl font-semibold'>Goals</h2>
-    <form className='grid gap-2 rounded-xl border border-neon/30 p-4 sm:grid-cols-2' onSubmit={(e)=>{e.preventDefault(); if(!createGoal(toPayload(draft))) return; setDraft(emptyDraft(branches[0]?.id ?? ''));}}>
+    <h2 className='text-2xl font-semibold tracking-tight'>Goals</h2>
+    <details className='rounded-xl border border-neon/20 bg-panelAlt/70 p-4' open>
+      <summary className='cursor-pointer text-sm font-medium text-amber-100'>Add Goal</summary>
+    <form className='mt-3 grid gap-2 sm:grid-cols-2' onSubmit={(e)=>{e.preventDefault(); if(!createGoal(toPayload(draft))) return; setDraft(emptyDraft(branches[0]?.id ?? ''));}}>
       <input required value={draft.title} onChange={(e)=>setDraft((v)=>({...v,title:e.target.value}))} className='rounded bg-bg px-3 py-2' placeholder='Goal title' />
       <select value={draft.pillarId} onChange={(e)=>setDraft((v)=>({...v,pillarId:e.target.value}))} className='rounded bg-bg px-3 py-2' required>
         {branches.map((b)=><option value={b.id} key={b.id}>{b.name}</option>)}
@@ -85,15 +87,16 @@ export default function GoalsPage() {
       <input type='date' value={draft.startDate} onChange={(e)=>setDraft((v)=>({...v,startDate:e.target.value}))} className='rounded bg-bg px-3 py-2' />
       <input type='date' value={draft.dueDate} onChange={(e)=>setDraft((v)=>({...v,dueDate:e.target.value}))} className='rounded bg-bg px-3 py-2' />
       <input value={draft.currentAction} onChange={(e)=>setDraft((v)=>({...v,currentAction:e.target.value}))} className='rounded bg-bg px-3 py-2 sm:col-span-2' placeholder='Current Action (optional)' />
-      <button className='rounded bg-neon px-3 py-2 font-semibold text-bg sm:col-span-2'>Add Goal</button>
+      <button className='rounded bg-neon px-3 py-2 font-semibold text-bg sm:col-span-2'>Save Goal</button>
     </form>
+    </details>
 
-    {groupedGoals.map(({ scale, goals: bucketGoals })=><section key={scale} className='rounded-xl border border-neon/30 p-4'>
+    {groupedGoals.map(({ scale, goals: bucketGoals })=><section key={scale} className='rounded-xl border border-neon/20 bg-panelAlt/65 p-4'>
       <h3 className='text-sm uppercase text-neonDim'>{scaleLabels[scale]}</h3>
       <div className='mt-2 space-y-2'>{bucketGoals.length===0 ? <p className='text-xs text-muted'>No goals yet.</p> : bucketGoals.map((g)=>{
         const pillar=branches.find((b)=>b.id===g.pillarId);
         const isEditing = editingId===g.id;
-        return <article key={g.id} className='rounded border border-neon/20 p-3 text-sm space-y-2'>
+        return <article key={g.id} className='rounded-lg border border-neon/15 bg-bg/20 p-3 text-sm space-y-2'>
           {isEditing ? <div className='grid gap-2 sm:grid-cols-2'>
             <input value={editingDraft.title} onChange={(e)=>setEditingDraft((v)=>({...v,title:e.target.value}))} className='rounded bg-bg px-2 py-1 sm:col-span-2' />
             <select value={editingDraft.pillarId} onChange={(e)=>setEditingDraft((v)=>({...v,pillarId:e.target.value}))} className='rounded bg-bg px-2 py-1'>{branches.map((b)=><option key={b.id} value={b.id}>{b.name}</option>)}</select>
@@ -110,7 +113,7 @@ export default function GoalsPage() {
             <p className='text-xs text-neonDim'>
               {g.priorityWeight !== undefined ? `Priority ${g.priorityWeight}` : 'No priority'}
               {g.dueDate ? ` • Due ${g.dueDate}` : g.scheduleBucket ? ` • ${g.scheduleBucket}` : ''}
-              {g.currentAction ? ` • Action: ${g.currentAction}` : ''}
+              {g.currentAction ? ` • Current Action: ${g.currentAction}` : ''}
             </p>
           </>}
           <div className='flex flex-wrap gap-2'>
