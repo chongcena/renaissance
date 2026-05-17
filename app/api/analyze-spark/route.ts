@@ -45,14 +45,14 @@ export async function POST(req: Request) {
 
     const prompt = `
 You are assisting inside Creative Momentum OS.
-Interpret a Spark and return only strict JSON for routing assistance.
+Interpret a Spark and return only strict JSON for possible-form assistance.
 Rules:
 - Do not invent fake certainty.
 - Keep user in control; suggestions are editable and optional.
 - Avoid generic productivity advice.
-- Suggest practical output lanes for a solo creative operator.
+- Suggest practical possible forms for a solo creative operator.
 - Pathways = possible outputs the Spark could become.
-- Next Move = one concrete physical action.
+- Current Action = one concrete physical action.
 
 Return this exact JSON shape:
 {

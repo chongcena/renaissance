@@ -17,11 +17,27 @@ export const pillarColorStyles: Record<PillarColor, { border: string; chip: stri
 
 export const getPillarColor = (branch?: Branch) => branch?.color ?? 'neutral';
 
-export function derivePriorityChip(spark: SparkItem, goals: Goal[]) {
+export function deriveCoolingState(spark: SparkItem) {
   if (spark.status === 'frozen') return 'Frozen';
   if (spark.status === 'cooling') return 'Cooling';
-  const linkedGoal = goals.find((g) => g.id === spark.goalId || (spark.currentAction && g.currentAction === spark.currentAction));
-  if (linkedGoal?.scale === 'day' || spark.scheduleBucket === 'today' || spark.currentAction || (spark.stage === 'Ember' || spark.stage === 'Flame')) return 'High Priority';
-  if (linkedGoal?.scale === 'week' || spark.scheduleBucket === 'this_week' || linkedGoal?.scale === 'month') return 'Medium Priority';
+  return null;
+}
+
+export function getPriorityRank(spark: SparkItem, goals: Goal[]) {
+  const linkedGoal = goals.find((g) => g.id === spark.goalId);
+  const goalWeight = linkedGoal?.priorityWeight ?? 0;
+  const scheduleBoost = spark.scheduleBucket === 'today' ? 50 : spark.scheduleBucket === 'tomorrow' ? 30 : spark.scheduleBucket === 'this_week' ? 20 : spark.scheduleBucket === 'this_month' ? 10 : 0;
+  const actionBoost = spark.currentAction?.trim() ? 20 : 0;
+  const goalScaleBoost = linkedGoal?.scale === 'day' ? 25 : linkedGoal?.scale === 'week' ? 15 : linkedGoal?.scale === 'month' ? 10 : 5;
+  const pinBoost = spark.manualPin ? 30 : 0;
+  return goalWeight + scheduleBoost + actionBoost + goalScaleBoost + pinBoost;
+}
+
+export function derivePriorityChip(spark: SparkItem, goals: Goal[]) {
+  const cooling = deriveCoolingState(spark);
+  if (cooling) return cooling;
+  const rank = getPriorityRank(spark, goals);
+  if (rank >= 70) return 'High Priority';
+  if (rank >= 35) return 'Medium Priority';
   return 'Low Priority';
 }

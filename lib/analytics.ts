@@ -50,5 +50,5 @@ export function getConversionData(sparks: SparkItem[], pathways: Pathway[], blaz
   const routedEmbers = sparks.filter((spark) => ['Ember', 'Fire', 'Blaze'].includes(spark.stage)).length;
   const activeFires = sparks.filter((spark) => spark.stage === 'Flame' && spark.status === 'active').length;
   const releasedBlazes = blazes.length;
-  return [ { name: 'Sparks', value: sparksCaptured }, { name: 'Routed Embers', value: routedEmbers }, { name: 'Active Fires', value: activeFires }, { name: 'Released Blazes', value: releasedBlazes } ];
+  return [ { name: 'Sparks', value: sparksCaptured }, { name: 'Active Embers', value: routedEmbers }, { name: 'Active Flames', value: activeFires }, { name: 'Released Outputs', value: releasedBlazes } ];
 }

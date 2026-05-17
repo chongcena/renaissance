@@ -46,7 +46,7 @@ export type SparkItem = {
   currentAction?: string;
   stage: Stage;
   status: Status;
-  heatScore: number;
+  heatScore: number; // legacy field; no longer used for active priority logic
   updatedAt: string;
   last_touched_at: string;
   notes?: string;
