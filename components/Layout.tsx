@@ -6,8 +6,8 @@ import { usePathname } from 'next/navigation';
 const nav = [
   ['Player Dashboard', '/'],
   ['Capture', '/add-spark'],
-  ['Inventory', '/vault'],
-  ['Skill Trees', '/branches'],
+  ['Vault', '/vault'],
+  ['Branches', '/branches'],
   ['Progress Analytics', '/stats']
 ];
 
