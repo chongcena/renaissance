@@ -1,37 +1,43 @@
 'use client';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Layout from '@/components/Layout';
 import { calculateHeatSignal, calculatePathwayReadiness } from '@/lib/logic';
 import { useStore } from '@/components/store';
 
 export default function SparkDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { branches, sparks, pathways, blazes, actions, addPathway, updatePathway, releaseBlaze, routeSpark, activateFire, freezeSpark } = useStore();
-  const [lane, setLane] = useState('');
-  const [feedback, setFeedback] = useState('');
+  const { branches, sparks, pathways, blazes, actions, addPathway, updatePathway, releaseBlaze, routeSpark, activateFire, freezeSpark, updateSpark } = useStore();
+  const [lane, setLane] = useState(''); const [nextMoveInput, setNextMoveInput] = useState('');
+  const [outputTitle, setOutputTitle] = useState(''); const [outputType, setOutputType] = useState('song'); const [feedback, setFeedback] = useState('');
   const spark = sparks.find((s) => s.id === id);
   if (!spark) return <Layout><p>Spark not found. <Link href='/vault' className='text-neon'>Back</Link></p></Layout>;
-  const routes = pathways.filter((p) => p.sparkId === id);
-  const sparkBlazes = blazes.filter((b) => b.sparkId === id);
-  const sparkActions = actions.filter((a) => a.action.includes(id) || a.action.includes(spark.title));
-  const branch = branches.find((b) => b.id === spark.branchId);
+  const routes = pathways.filter((p) => p.sparkId === id); const sparkBlazes = blazes.filter((b) => b.sparkId === id); const branch = branches.find((b) => b.id === spark.branchId);
   const heat = calculateHeatSignal(spark, { branches, pathways, blazes });
-  const actionsButtons: { label: string; run: () => void }[] = [
-    { label: 'Route to Ember', run: () => { routeSpark(spark.id); setFeedback('Spark routed to Ember.'); } },
-    { label: 'Activate Fire', run: () => { activateFire(spark.id); setFeedback('Spark activated in Fire stage.'); } },
-    { label: 'Release Blaze', run: () => { releaseBlaze(spark.id, `${spark.title} Release`); setFeedback('Blaze released and Burner earned.'); } },
-    { label: 'Freeze', run: () => { freezeSpark(spark.id); setFeedback('Spark frozen.'); } }
-  ];
+  const diagnosis = useMemo(() => {
+    if (!routes.length) return 'This Spark has no pathway yet. Give it one possible output lane so momentum can start.';
+    if (!spark.nextMove?.trim()) return 'This Spark has one strong pathway but no next move. Define the next physical action to keep momentum alive.';
+    if (spark.stage === 'Fire' && heat.score >= 70) return 'This is close to release because it has an active pathway and high Heat.';
+    return `This Spark is in ${spark.stage}. Keep momentum by completing one concrete move.`;
+  }, [routes.length, spark.nextMove, spark.stage, heat.score]);
 
-  return <Layout><h2 className='text-xl font-semibold'>Spark Command Hub</h2>{feedback?<p className='mt-2 rounded border border-neon/40 p-2 text-sm text-neon'>{feedback}</p>:null}
+  const stageActions = spark.stage === 'Spark' ? [<button key='route' onClick={()=>{routeSpark(spark.id);setFeedback('Spark routed to Ember.');}} className='rounded border border-neon/40 bg-bg px-3 py-1 text-sm'>Route Spark</button>, <button key='freeze' onClick={()=>freezeSpark(spark.id)} className='rounded border border-neon/40 bg-bg px-3 py-1 text-sm'>Freeze</button>] : spark.stage === 'Ember' ? [<button key='pathway' onClick={()=>setFeedback('Add or choose a pathway below.')} className='rounded border border-neon/40 bg-bg px-3 py-1 text-sm'>Add/Choose Pathway</button>, ...(routes.length?[<button key='fire' onClick={()=>{activateFire(spark.id);setFeedback('Fire activated.');}} className='rounded border border-neon/40 bg-bg px-3 py-1 text-sm'>Activate Fire</button>]:[]), <button key='freeze' onClick={()=>freezeSpark(spark.id)} className='rounded border border-neon/40 bg-bg px-3 py-1 text-sm'>Freeze</button>] : spark.stage === 'Fire' ? [<button key='setmove' onClick={()=>setFeedback('Set or update next move below.')} className='rounded border border-neon/40 bg-bg px-3 py-1 text-sm'>Set/Update Next Move</button>, <button key='completemove' onClick={()=>setFeedback('Complete Move is preview until move history is modeled.')} className='rounded border border-neon/40 bg-bg px-3 py-1 text-sm'>Complete Move (Preview)</button>, <button key='freeze' onClick={()=>freezeSpark(spark.id)} className='rounded border border-neon/40 bg-bg px-3 py-1 text-sm'>Freeze</button>] : [<button key='output' onClick={()=>setFeedback('Add another output by releasing a new Blaze below.')} className='rounded border border-neon/40 bg-bg px-3 py-1 text-sm'>Add Another Output</button>, <button key='flare' className='rounded border border-neon/40 bg-bg px-3 py-1 text-sm'>Review Solar Flare</button>, <button key='sun' className='rounded border border-neon/40 bg-bg px-3 py-1 text-sm'>Create Sun (Preview)</button>];
+
+  return <Layout><h2 className='text-xl font-semibold'>Spark Command Hub</h2>
+    <section className='mt-3 rounded-xl border border-neon/40 bg-panelAlt/85 p-4'><h3 className='text-sm uppercase text-neonDim'>Diagnosis</h3><p className='mt-2 text-sm'>{diagnosis}</p><p className='mt-2 text-xs text-neonDim'>Next command: {heat.suggestedAction}</p></section>
+    {feedback?<p className='mt-2 rounded border border-neon/40 p-2 text-sm text-neon'>{feedback}</p>:null}
     <article className='mt-3 rounded-xl border border-neon/40 bg-panelAlt/85 p-4'><h3 className='text-lg font-semibold'>{spark.title}</h3><p className='text-xs text-muted'>{spark.kind} • {branch?.name ?? spark.branchId}</p><p className='mt-2 text-sm'>{spark.notes || 'No notes yet.'}</p>
-    <dl className='mt-3 grid grid-cols-2 gap-2 text-sm'><div><dt className='text-muted'>Stage</dt><dd>{spark.stage}</dd></div><div><dt className='text-muted'>Status</dt><dd>{spark.status}</dd></div><div><dt className='text-muted'>Heat Score</dt><dd>{heat.score} ({heat.label})</dd></div><div><dt className='text-muted'>Next Move</dt><dd>{spark.nextMove || 'No next move set.'}</dd></div></dl>
-    <p className='mt-2 text-xs text-muted'>{heat.reasons.join(' ')}</p><p className='mt-1 text-xs text-neonDim'>Suggested action: {heat.suggestedAction}</p>
-    <div className='mt-3 flex flex-wrap gap-2'>{actionsButtons.map((item)=><button key={item.label} onClick={item.run} className='rounded border border-neon/40 bg-bg px-3 py-1 text-sm'>{item.label}</button>)}</div></article>
-    <section className='mt-4 rounded-xl border border-neon/40 bg-panelAlt/85 p-4'><h4 className='text-sm uppercase text-neonDim'>Pathways</h4><div className='mt-2 flex gap-2'><input value={lane} onChange={(e)=>setLane(e.target.value)} placeholder='New pathway lane/title' className='flex-1 rounded bg-bg p-2'/><button className='rounded bg-neon px-3 text-bg' onClick={()=>{if(lane.trim()){addPathway(spark.id,lane.trim());setFeedback('Pathway added.');setLane('');}}}>Create Pathway</button></div><ul className='mt-3 space-y-2'>{routes.length?routes.map((r)=>{const readiness=calculatePathwayReadiness(r,spark,{branches,pathways,blazes});return <li key={r.id} className='rounded border border-neon/40 p-3 text-sm'><p className='font-medium'>{r.lane}</p><p className='text-xs text-muted'>Status: {r.status} • Readiness: {readiness.score}% ({readiness.label}) • Next Move: {spark.nextMove||'None'}</p><p className='mt-1 text-xs text-muted'>{readiness.reasons.join(' ')}</p><p className='mt-1 text-xs text-neonDim'>Suggested action: {readiness.suggestedAction}</p><button onClick={()=>updatePathway(r.id,{status:r.status==='active'?'cooling':'active'})} className='mt-2 rounded border border-neon/40 px-2 py-1 text-xs'>Toggle active/cooling</button></li>}):<li className='text-sm text-muted'>No pathways yet.</li>}</ul></section>
+    <dl className='mt-3 grid grid-cols-2 gap-2 text-sm'><div><dt className='text-muted'>Stage</dt><dd>{spark.stage}</dd></div><div><dt className='text-muted'>Status</dt><dd>{spark.status}</dd></div><div><dt className='text-muted'>What could it become?</dt><dd>{routes.length ? routes.map((r)=>r.lane).join(', ') : 'No pathway chosen yet'}</dd></div><div><dt className='text-muted'>Next Physical Move</dt><dd>{spark.nextMove || 'No next move set yet'}</dd></div></dl>
+    <div className='mt-3 flex flex-wrap gap-2'>{stageActions}</div></article>
+
+    <section className='mt-4 rounded-xl border border-neon/40 bg-panelAlt/85 p-4'><h4 className='text-sm uppercase text-neonDim'>Next Move Command</h4><div className='mt-2 flex gap-2'><input value={nextMoveInput} onChange={(e)=>setNextMoveInput(e.target.value)} placeholder='Record rough vocals / Clean linework / Export print file...' className='flex-1 rounded bg-bg p-2'/><button className='rounded bg-neon px-3 text-bg' onClick={()=>{if(nextMoveInput.trim()){updateSpark(spark.id,{nextMove:nextMoveInput.trim()});setFeedback(`Set Next Move: ${nextMoveInput.trim()}`);setNextMoveInput('');}}}>Set Next Move</button></div></section>
+
+    <section className='mt-4 rounded-xl border border-neon/40 bg-panelAlt/85 p-4'><h4 className='text-sm uppercase text-neonDim'>Pathways</h4><div className='mt-2 flex gap-2'><input value={lane} onChange={(e)=>setLane(e.target.value)} placeholder='Possible output lane/title' className='flex-1 rounded bg-bg p-2'/><button className='rounded bg-neon px-3 text-bg' onClick={()=>{if(lane.trim()){addPathway(spark.id,lane.trim());setFeedback('Pathway added.');setLane('');}}}>Add Pathway</button></div><ul className='mt-3 space-y-2'>{routes.length?routes.map((r)=>{const readiness=calculatePathwayReadiness(r,spark,{branches,pathways,blazes});return <li key={r.id} className='rounded border border-neon/40 p-3 text-sm'><p className='font-medium'>{r.lane}</p><p className='text-xs text-muted'>Status: {r.status} • Readiness: {readiness.label}</p><p className='mt-1 text-xs text-muted'>{readiness.reasons.join(' ')}</p><p className='mt-1 text-xs text-neonDim'>Next move: {spark.nextMove || 'Set one for this pathway.'}</p><div className='mt-2 flex flex-wrap gap-2'><button onClick={()=>updatePathway(r.id,{status:'active'})} className='rounded border border-neon/40 px-2 py-1 text-xs'>Choose Pathway</button><button onClick={()=>activateFire(spark.id)} className='rounded border border-neon/40 px-2 py-1 text-xs'>Activate as Fire</button><button onClick={()=>updateSpark(spark.id,{status:'frozen'})} className='rounded border border-neon/40 px-2 py-1 text-xs'>Freeze Pathway (Preview)</button></div></li>}):<li className='text-sm text-muted'>No pathways yet.</li>}</ul></section>
+
+    <section className='mt-4 rounded-xl border border-neon/40 bg-panelAlt/85 p-4'><h4 className='text-sm uppercase text-neonDim'>Release Blaze</h4><div className='mt-2 grid gap-2 sm:grid-cols-3'><input value={outputTitle} onChange={(e)=>setOutputTitle(e.target.value)} placeholder='Output title' className='rounded bg-bg p-2'/><input value={outputType} onChange={(e)=>setOutputType(e.target.value)} placeholder='song/reel/post/tattoo/print...' className='rounded bg-bg p-2'/><button className='rounded bg-neon px-3 py-2 text-bg' onClick={()=>{if(outputTitle.trim()&&outputType.trim()){releaseBlaze(spark.id,outputTitle.trim(),outputType.trim());setFeedback(`Released Blaze: ${outputTitle.trim()}`);setOutputTitle('');}}}>Release Blaze</button></div></section>
+
+    <section className='mt-4 rounded-xl border border-neon/40 bg-panelAlt/85 p-4'><h4 className='text-sm uppercase text-neonDim'>Action Log</h4><ul className='mt-2 text-sm'>{actions.filter((a) => a.action.includes(spark.title) || a.action.includes('Next Move') || a.action.includes('Blaze')).slice(0,8).map((a)=><li key={a.id}>{a.date} • {a.action}</li>)}</ul></section>
     <section className='mt-4 rounded-xl border border-neon/40 bg-panelAlt/85 p-4'><h4 className='text-sm uppercase text-neonDim'>Blaze Logs</h4><ul className='mt-2 text-sm'>{sparkBlazes.length?sparkBlazes.map((b)=><li key={b.id}>{b.releasedAt} • {b.title}</li>):<li className='text-muted'>No Blaze Logs yet.</li>}</ul></section>
-    <section className='mt-4 rounded-xl border border-neon/40 bg-panelAlt/85 p-4'><h4 className='text-sm uppercase text-neonDim'>Action Log</h4><ul className='mt-2 text-sm'>{sparkActions.length?sparkActions.map((a)=><li key={a.id}>{a.date} • {a.action_type} • {a.action}</li>):<li className='text-muted'>No actions yet.</li>}</ul></section>
   </Layout>;
 }
