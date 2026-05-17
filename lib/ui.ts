@@ -39,5 +39,5 @@ export function derivePriorityChip(spark: SparkItem, goals: Goal[]) {
   const rank = getPriorityRank(spark, goals);
   if (rank >= 70) return 'High Priority';
   if (rank >= 35) return 'Medium Priority';
-  return 'Low Priority';
+  return 'Standard Priority';
 }
