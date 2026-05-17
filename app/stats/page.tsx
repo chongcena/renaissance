@@ -19,7 +19,7 @@ export default function StatsPage() {
   const tagsMissing = !branches.some((branch) => branch.tags?.length);
   const topCards = [
     ['Total Assets', sparks.length],
-    ['Active Fires', stageCounts.Fire],
+    ['Active Flames', stageCounts.Flame],
     ['Released Outputs', blazes.length],
     ['Momentum Score', actions.filter((a) => a.countsForStreak).length]
   ] as const;
@@ -47,7 +47,7 @@ export default function StatsPage() {
   return <Layout><h2 className="mb-4 text-xl font-semibold">Progress Analytics / Stats</h2><section className='mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>{topCards.map(([label,val])=><article key={label} className='rounded-xl border border-neon/30 bg-panelAlt/85 p-3'><p className='text-xs uppercase tracking-widest text-neonDim'>{label}</p><p className='mt-1 text-2xl font-semibold text-amber-100'>{val}</p></article>)}</section>
     <Section title="Branch Allocation">{branches.map((b)=><Bar key={b.id} label={`${b.name} ${b.strategicWeight}%`} value={b.strategicWeight} />)}</Section>
     <Section title="Planned vs Actual Focus">{attentionRouting.map((b)=><DualBar key={b.id} label={`${b.name} • ${b.status}`} planned={b.strategicWeight} actual={b.actual} />)}</Section>
-    <Section title="Asset Evolution Flow"><div className="grid grid-cols-4 gap-2 text-center text-xs">{(['Spark', 'Ember', 'Fire', 'Blaze'] as const).map((key)=><div key={key} className="rounded border border-neon/30 p-2"><p className="text-neonDim">{key}</p><p className="text-xl font-semibold text-amber-100">{stageCounts[key]}</p></div>)}</div></Section>
+    <Section title="Asset Evolution Flow"><div className="grid grid-cols-4 gap-2 text-center text-xs">{(['Spark', 'Ember', 'Flame', 'Blaze'] as const).map((key)=><div key={key} className="rounded border border-neon/30 p-2"><p className="text-neonDim">{key}</p><p className="text-xl font-semibold text-amber-100">{stageCounts[key]}</p></div>)}</div></Section>
     <Section title="Capture-to-Release Funnel">{conversion.map((item)=><Bar key={item.name} label={`${item.name}: ${item.value}`} value={Math.round((item.value / Math.max(conversion[0].value,1))*100)} />)}</Section>
     <Section title="Released Output Types">{outputTypeMissing ? <Empty text="Release Blazes with output types to activate this chart." /> : <p className="text-sm text-muted">Output type data detected in released Blaze records.</p>}</Section>
     <Section title="Value Distribution">{tagsMissing ? <Empty text="Add value tags to Sparks, Pathways, or Blazes to activate value routing." /> : <p className="text-sm text-muted">Value tags exist. Expand routing analytics next.</p>}</Section>
