@@ -1,7 +1,7 @@
 export type Stage = 'Spark' | 'Ember' | 'Fire' | 'Blaze';
 export type Status = 'new' | 'active' | 'cooling' | 'frozen' | 'archived' | 'killed';
 
-export type Branch = { id: string; name: string; focus: string; heatScore: number; frozen?: boolean };
+export type Branch = { id: string; name: string; focus: string; heatScore: number; frozen?: boolean; tags?: string[] };
 export type SparkItem = {
   id: string;
   title: string;
@@ -13,6 +13,7 @@ export type SparkItem = {
   updatedAt: string;
   last_touched_at: string;
   notes?: string;
+  nextMove?: string;
 };
 
 export type Pathway = { id: string; sparkId: string; lane: string; confidence: number; status: Status; last_touched_at: string };
