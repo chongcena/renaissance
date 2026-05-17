@@ -6,7 +6,7 @@ type ReadinessLabel = 'Weak' | 'Possible' | 'Strong' | 'Active';
 
 const clamp = (n: number, min = 0, max = 100) => Math.max(min, Math.min(max, n));
 const daysSince = (date: string) => Math.max(0, Math.floor((Date.now() - new Date(date).getTime()) / 86400000));
-const statusWeight: Record<Status, number> = { new: 2, active: 12, cooling: -8, frozen: -20, archived: -30, killed: -35 };
+const statusWeight: Record<Status, number> = { new: 2, active: 12, cooling: -8, frozen: -20, killed: -35 };
 
 export function calculateHeatSignal(spark: SparkItem, context: LogicContext) {
   const reasons: string[] = [];
@@ -20,7 +20,7 @@ export function calculateHeatSignal(spark: SparkItem, context: LogicContext) {
   const staleDays = daysSince(spark.last_touched_at);
   if (staleDays <= 1) score += 10; else if (staleDays <= 3) score += 4; else if (staleDays <= 7) score -= 8; else score -= 15;
   reasons.push(`Last touched ${staleDays} day(s) ago.`);
-  if (spark.nextMove?.trim()) { score += 10; reasons.push('A clear next move exists.'); } else { score -= 8; reasons.push('No clear next move is defined yet.'); }
+  if (spark.currentAction?.trim()) { score += 10; reasons.push('A clear next move exists.'); } else { score -= 8; reasons.push('No clear next move is defined yet.'); }
   if (sparkPaths.length > 0) { score += Math.min(10, sparkPaths.length * 3); reasons.push(`${sparkPaths.length} pathway option(s) exist.`); }
   if (sparkPaths.some((p) => p.status === 'active' || p.status === 'chosen')) { score += 8; reasons.push('At least one pathway is active.'); }
   if (spark.stage === 'Flame' && spark.status === 'active') { score += 10; reasons.push('Active Flame assets are close to release momentum.'); }
@@ -29,7 +29,7 @@ export function calculateHeatSignal(spark: SparkItem, context: LogicContext) {
   if (valueTags > 0) { score += Math.min(6, valueTags * 2); reasons.push(`Branch value tags strengthen value signal (${valueTags}).`); }
   score = clamp(Math.round(score));
   const label: HeatLabel = score >= 85 ? 'High Heat' : score >= 70 ? 'Hot' : score >= 45 ? 'Warm' : 'Low';
-  const suggestedAction = !spark.nextMove?.trim() ? 'Define one concrete next move to keep momentum.' : staleDays >= 3 ? 'Complete the next move today to prevent cool down.' : label === 'High Heat' ? 'Protect this momentum and push it toward release.' : 'Route or activate the strongest pathway.';
+  const suggestedAction = !spark.currentAction?.trim() ? 'Define one concrete next move to keep momentum.' : staleDays >= 3 ? 'Complete the next move today to prevent cool down.' : label === 'High Heat' ? 'Protect this momentum and push it toward release.' : 'Route or activate the strongest pathway.';
   return { score, label, reasons, suggestedAction };
 }
 
@@ -41,13 +41,13 @@ export function calculatePathwayReadiness(pathway: Pathway, spark: SparkItem, co
   if (spark.stage === 'Ember' || spark.stage === 'Flame') { score += 15; reasons.push(`Spark stage ${spark.stage} supports pathway execution.`); }
   if (pathway.status === 'active' || pathway.status === 'chosen') { score += 20; reasons.push('Pathway is active/chosen.'); }
   if (context.branches.some((b) => b.id === spark.branchId)) { score += 10; reasons.push('Pathway belongs to an existing branch.'); }
-  if (spark.nextMove?.trim()) { score += 10; reasons.push('Spark has a next move defined.'); }
+  if (spark.currentAction?.trim()) { score += 10; reasons.push('Spark has a next move defined.'); }
   if (typeof pathway.confidence === 'number') { score += clamp(pathway.confidence) * 0.15; reasons.push(`Pathway heat/value signal contributes (${pathway.confidence}).`); }
   const stale = daysSince(pathway.last_touched_at);
   if (stale >= 7) { score -= 12; reasons.push(`Pathway has been untouched for ${stale} days.`); }
   score = clamp(Math.round(score));
   const label: ReadinessLabel = score >= 85 ? 'Active' : score >= 65 ? 'Strong' : score >= 40 ? 'Possible' : 'Weak';
-  const suggestedAction = !spark.nextMove?.trim() ? 'Set the next move this pathway should drive.' : (pathway.status !== 'active' && pathway.status !== 'chosen') ? 'Choose this pathway or park it to reduce ambiguity.' : 'Execute the next move and log progress.';
+  const suggestedAction = !spark.currentAction?.trim() ? 'Set the next move this pathway should drive.' : (pathway.status !== 'active' && pathway.status !== 'chosen') ? 'Choose this pathway or park it to reduce ambiguity.' : 'Execute the next move and log progress.';
   return { score, label, reasons, suggestedAction };
 }
 
@@ -58,7 +58,7 @@ export function getCoolDownWarnings(sparks: SparkItem[], pathways: Pathway[], _a
     if (spark.status !== 'active' && heat.label === 'Low') return [];
     const shouldWarn = (spark.stage === 'Spark' && d >= 3) || (spark.stage === 'Ember' && d >= 7) || (spark.stage === 'Flame' && spark.status === 'active' && d >= 5) || ((heat.label === 'Hot' || heat.label === 'High Heat') && d >= 3);
     if (!shouldWarn) return [];
-    return [{ id: `cd-${spark.id}`, sparkId: spark.id, title: `Cool Down Risk: ${spark.title}`, reason: `${spark.stage} item untouched for ${d} days while value signal is ${heat.label}.`, suggestedAction: spark.nextMove?.trim() ? `Do next move: ${spark.nextMove}.` : 'Define and complete one concrete next move today.' }];
+    return [{ id: `cd-${spark.id}`, sparkId: spark.id, title: `Cool Down Risk: ${spark.title}`, reason: `${spark.stage} item untouched for ${d} days while value signal is ${heat.label}.`, suggestedAction: spark.currentAction?.trim() ? `Do next move: ${spark.currentAction}.` : 'Define and complete one concrete next move today.' }];
   });
 }
 
@@ -70,9 +70,9 @@ export function getNearBlazeItems(sparks: SparkItem[], pathways: Pathway[], blaz
       const label = calculatePathwayReadiness(p, spark, { branches, pathways, blazes }).label;
       return label === 'Strong' || label === 'Active';
     });
-    const near = spark.stage === 'Flame' && spark.status === 'active' && sparkPaths.length > 0 && (!!spark.nextMove?.trim() || hasStrongPath) && (heat.label === 'Hot' || heat.label === 'High Heat');
+    const near = spark.stage === 'Flame' && spark.status === 'active' && sparkPaths.length > 0 && (!!spark.currentAction?.trim() || hasStrongPath) && (heat.label === 'Hot' || heat.label === 'High Heat');
     if (!near) return [];
-    return [{ sparkId: spark.id, title: spark.title, reason: `Flame is active with ${sparkPaths.length} pathway(s) and ${heat.label} heat.`, suggestedAction: spark.nextMove?.trim() ? `Complete next move: ${spark.nextMove}.` : 'Choose one pathway move and execute it today.' }];
+    return [{ sparkId: spark.id, title: spark.title, reason: `Flame is active with ${sparkPaths.length} pathway(s) and ${heat.label} heat.`, suggestedAction: spark.currentAction?.trim() ? `Complete next move: ${spark.currentAction}.` : 'Choose one pathway move and execute it today.' }];
   });
 }
 
@@ -111,7 +111,7 @@ export function deriveSparkLifecycle(spark: SparkItem, pathways: Pathway[], blaz
   const sparkBlazes = blazes.filter((b) => b.sparkId === spark.id);
   const activePath = sparkPaths.find((p) => p.status === 'active' || p.status === 'chosen');
   if (sparkBlazes.length > 0) return { stage: 'Blaze' as const, reason: 'This Spark has released a Blaze.' };
-  if (activePath && (activePath.nextMove?.trim() || spark.nextMove?.trim())) return { stage: 'Flame' as const, reason: `This Spark is in Flame because ${activePath.title} is active and has a next move.` };
+  if (activePath && (activePath.currentAction?.trim() || spark.currentAction?.trim())) return { stage: 'Flame' as const, reason: `This Spark is in Flame because ${activePath.title} is active and has a next move.` };
   if (sparkPaths.length > 0 || (!!spark.branchId && spark.kind.trim())) return { stage: 'Ember' as const, reason: 'This Spark has routed potential. Choose the strongest pathway.' };
   return { stage: 'Spark' as const, reason: 'This Spark has not been routed yet. Add one possible output lane.' };
 }
