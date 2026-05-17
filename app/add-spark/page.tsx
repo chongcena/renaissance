@@ -14,11 +14,11 @@ export default function CaptureSparkPage() {
   const router = useRouter();
   const { branches, createSpark } = useStore();
   const [title, setTitle] = useState('');
-  const [kind, setKind] = useState('captured material');
+  const [kind, setKind] = useState('');
   const [branchId, setBranchId] = useState(branches[0]?.id ?? '');
   const [notes, setNotes] = useState('');
   const [nextMove, setNextMove] = useState('');
-  const [mode, setMode] = useState<(typeof modes)[number]>('Write Note');
+  const [mode, setMode] = useState<(typeof modes)[number] | ''>('');
   const [linkUrl, setLinkUrl] = useState('');
   const [attachment, setAttachment] = useState<DraftAttachment | null>(null);
 
@@ -38,10 +38,10 @@ export default function CaptureSparkPage() {
     router.push(`/spark/${createdId}`);
   };
 
-  return <Layout><section className="space-y-4"><h2 className="text-xl font-semibold">Capture Spark</h2><p className='text-xs text-muted'>Local preview uploads use temporary browser object URLs and may disappear on refresh until backend storage is added.</p><div className='grid gap-2 sm:grid-cols-3'>{modes.map((m)=><button key={m} type='button' onClick={()=>setMode(m)} className={`rounded border px-3 py-2 text-sm ${mode===m?'border-neon bg-neon/20':'border-neon/40 bg-bg'}`}>{m}</button>)}</div>
+  return <Layout><section className="space-y-4"><h2 className="text-xl font-semibold">Capture Spark</h2><p className='text-xs text-muted'>Local preview uploads use temporary browser object URLs and may disappear on refresh until backend storage is added.</p><div className='grid gap-2 sm:grid-cols-3'>{modes.map((m)=><button key={m} type='button' onClick={()=>{setMode(m);setKind(m.includes('Note')?'note':m.includes('Link')?'link':m.includes('Image')?'image':m.includes('Audio')?'audio':m.includes('Video')?'video':'file');}} className={`rounded border px-3 py-2 text-sm ${mode===m?'border-neon bg-neon/20':'border-neon/40 bg-bg'}`}>{m}</button>)}</div>
   <form className="space-y-3 rounded-xl border border-neon/40 bg-panelAlt/85 p-4 backdrop-blur-sm" onSubmit={(e)=>{e.preventDefault();create();}}>
     <input value={title} onChange={(e)=>setTitle(e.target.value)} className="w-full rounded-lg border border-neon/40 bg-bg px-3 py-2" placeholder="Title (optional)" />
-    <input value={kind} onChange={(e)=>setKind(e.target.value)} className="w-full rounded-lg border border-neon/40 bg-bg px-3 py-2" placeholder="Kind" />
+    <input value={kind} onChange={(e)=>setKind(e.target.value)} className="w-full rounded-lg border border-neon/40 bg-bg px-3 py-2" placeholder='Kind' />
     <select value={branchId} onChange={(e)=>setBranchId(e.target.value)} className="w-full rounded-lg border border-neon/40 bg-bg px-3 py-2"><option value=''>No branch yet</option>{branches.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select>
     {mode==='Write Note' && <textarea value={notes} onChange={(e)=>setNotes(e.target.value)} className="h-24 w-full rounded-lg border border-neon/40 bg-bg px-3 py-2" placeholder="Capture your raw note..." />}
     {mode==='Paste Link' && <input value={linkUrl} onChange={(e)=>setLinkUrl(e.target.value)} className='w-full rounded-lg border border-neon/40 bg-bg px-3 py-2' placeholder='https://example.com/inspiration' />}
