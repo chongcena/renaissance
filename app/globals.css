@@ -8,10 +8,10 @@
 
 body {
   @apply bg-bg text-text antialiased;
-  background-image: radial-gradient(circle at top, rgba(124, 255, 178, 0.08) 0%, transparent 45%), linear-gradient(180deg, #05070d 0%, #04050a 100%);
+  background-image: radial-gradient(circle at 15% 0%, rgba(242, 159, 67, 0.15) 0%, transparent 38%), radial-gradient(circle at 85% 15%, rgba(217, 163, 74, 0.1) 0%, transparent 35%), linear-gradient(180deg, #09090c 0%, #050507 100%);
 }
 
 .grid-matrix {
-  background-image: linear-gradient(rgba(124,255,178,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(124,255,178,0.05) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(242, 159, 67, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(242, 159, 67, 0.08) 1px, transparent 1px);
   background-size: 24px 24px;
 }

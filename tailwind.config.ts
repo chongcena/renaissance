@@ -9,18 +9,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg: '#05070D',
-        panel: '#0B0F1A',
-        panelAlt: '#0D1322',
-        neon: '#7CFFB2',
-        neonDim: '#43C280',
-        ember: '#FF9E5E',
-        fire: '#FF5C7A',
-        text: '#E6F1FF',
-        muted: '#7F8DA3'
+        bg: '#050507',
+        panel: '#111216',
+        panelAlt: '#171820',
+        neon: '#F29F43',
+        neonDim: '#D9A34A',
+        ember: '#F6BF6C',
+        fire: '#F06B43',
+        text: '#F6F0E6',
+        muted: '#A09488',
+        frozen: '#6C7C92'
       },
       boxShadow: {
-        glow: '0 0 0 1px rgba(124,255,178,0.3), 0 0 30px rgba(124,255,178,0.08)'
+        glow: '0 0 0 1px rgba(242,159,67,0.35), 0 0 30px rgba(242,159,67,0.12)'
       }
     }
   },

@@ -22,10 +22,10 @@ export default function SparkPage() {
 
   return (
     <Layout>
-      <section className="rounded-xl border border-neon/20 bg-panelAlt p-6">
+      <section className="rounded-xl border border-neon/40 bg-panelAlt/85 backdrop-blur-sm p-6">
         <h2 className="text-xl font-semibold">No Sparks Yet</h2>
         <p className="mt-2 text-sm text-muted">Capture your first Spark in Vault to start momentum.</p>
-        <Link href="/vault" className="mt-4 inline-block rounded bg-neon px-4 py-2 font-semibold text-black">
+        <Link href="/vault" className="mt-4 inline-block rounded bg-neon px-4 py-2 font-semibold text-bg">
           Go to Vault
         </Link>
       </section>

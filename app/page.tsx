@@ -21,4 +21,4 @@ export default function HomePage() {
     <Card label="Stats Snapshot" value={`${sparks.length} Sparks / ${pathways.length} Pathways / ${branches.length} Branches`} />
   </div></section></Layout>;
 }
-function Card({ label, value }: { label: string; value: string }) { return <div className="rounded-xl border border-neon/20 bg-panelAlt p-4"><p className="text-xs uppercase tracking-wider text-muted">{label}</p><p className="mt-2 text-3xl font-bold text-neon">{value}</p></div>; }
+function Card({ label, value }: { label: string; value: string }) { return <div className="rounded-xl border border-neon/40 bg-panelAlt/85 backdrop-blur-sm p-4"><p className="text-xs uppercase tracking-wider text-muted">{label}</p><p className="mt-2 text-3xl font-bold text-neon">{value}</p></div>; }
