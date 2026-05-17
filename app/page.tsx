@@ -5,13 +5,20 @@ import { useStore } from '@/components/store';
 import { detectSolarFlares, getCoolDownWarnings, getNearBlazeItems } from '@/lib/logic';
 
 export default function HomePage() {
-  const { blazes, branches, sparks, pathways } = useStore();
+  const { blazes, branches, sparks, pathways, actions } = useStore();
   const activeFires = sparks.filter((s) => s.stage === 'Fire' && s.status === 'active');
   const coolDownWarnings = getCoolDownWarnings(sparks, pathways, [], branches);
   const nearBlaze = getNearBlazeItems(sparks, pathways, blazes, branches);
   const solarFlares = detectSolarFlares(sparks, pathways, blazes, [], branches);
   const suggestedMoves = sparks.filter((s)=>s.status==='active').slice(0,5).map((s)=>({id:s.id,title:s.title,meta:s.nextMove?`Next Move: ${s.nextMove}`:'Set a next physical move'}));
   const recentBlazes = blazes.slice(0, 5);
+  const attentionSignals = branches.map((b) => {
+    const actual = Math.round((actions.filter((a)=>a.countsForStreak && a.branchId===b.id).length / Math.max(1, actions.filter((a)=>a.countsForStreak).length)) * 100);
+    const delta = actual - b.strategicWeight;
+    if (delta > 8) return { id: `sig-over-${b.id}`, title: `${b.name} is over-consuming attention`, meta: `Planned ${b.strategicWeight}% vs actual ${actual}%` };
+    if (delta < -8) return { id: `sig-under-${b.id}`, title: `${b.name} is underfed`, meta: `Planned ${b.strategicWeight}% vs actual ${actual}%` };
+    return null;
+  }).filter(Boolean) as { id: string; title: string; meta: string }[];
 
   return <Layout><section className="space-y-4"><div className="flex items-center justify-between"><h2 className="text-xl font-semibold">Home / Command</h2><Link href="/add-spark" className="rounded-lg bg-neon px-4 py-2 font-semibold text-bg">Quick Capture</Link></div>
     <ListSection title="Today's Command / Suggested Next Moves" items={suggestedMoves} empty="No active sparks yet." />
@@ -19,6 +26,7 @@ export default function HomePage() {
     <ListSection title="Cooling Sparks" items={coolDownWarnings.map((w) => ({ id: w.sparkId, title: w.title, meta: `${w.reason} ${w.suggestedAction}` }))} empty="No cooling Sparks right now." />
     <ListSection title="Near Blaze" items={nearBlaze.map((s) => ({ id: s.sparkId, title: s.title, meta: `${s.reason} ${s.suggestedAction}` }))} empty="No Near Blaze Sparks yet." />
     <ListSection title="Solar Flares" items={solarFlares.map((f)=>({id:f.id,title:f.title,meta:f.suggestedAction}))} empty="No flare patterns detected yet." />
+    <ListSection title="Strategic Signals" items={attentionSignals} empty="No major attention misalignment detected." />
     <ListSection title="Recent Blazes" items={recentBlazes.map((b) => ({ id: b.sparkId, title: b.title, meta: b.releasedAt }))} empty="No Blaze releases yet." />
   </section></Layout>;
 }

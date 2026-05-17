@@ -1,9 +1,9 @@
 import type { ActionLog, BlazeLog, Branch, BurnerLedger, Pathway, SparkItem } from './types';
 
 export const branches: Branch[] = [
-  { id: 'br-01', name: 'Music', focus: 'Hybrid ambient EP', heatScore: 86 },
-  { id: 'br-02', name: 'Writing', focus: 'Creative systems essays', heatScore: 74 },
-  { id: 'br-03', name: 'Design Lab', focus: 'Visual identity experiments', heatScore: 63, frozen: true }
+  { id: 'br-01', name: 'Music', focus: 'Hybrid ambient EP', strategicWeight: 40, role: 'Driver' },
+  { id: 'br-02', name: 'Writing', focus: 'Creative systems essays', strategicWeight: 35, role: 'Strategic Flagship' },
+  { id: 'br-03', name: 'Design Lab', focus: 'Visual identity experiments', strategicWeight: 25, role: 'Audience Builder', frozen: true }
 ];
 
 export const spark_items: SparkItem[] = [
@@ -21,9 +21,9 @@ export const blaze_logs: BlazeLog[] = [
 ];
 
 export const action_log: ActionLog[] = [
-  { id: 'ac-01', action_type: 'route', action: 'Routed Spark to 2 pathways', date: '2026-05-15', countsForStreak: true },
-  { id: 'ac-02', action_type: 'progress', action: 'Completed Heat Check on Writing branch', date: '2026-05-14', countsForStreak: true },
-  { id: 'ac-03', action_type: 'create_blaze', action: 'Logged Blaze and minted Burner', date: '2026-05-13', countsForStreak: true }
+  { id: 'ac-01', action_type: 'route', action: 'Routed Spark to 2 pathways', date: '2026-05-15', countsForStreak: true, branchId: 'br-01', sparkId: 'sp-100' },
+  { id: 'ac-02', action_type: 'progress', action: 'Completed Heat Check on Writing branch', date: '2026-05-14', countsForStreak: true, branchId: 'br-02', sparkId: 'sp-101' },
+  { id: 'ac-03', action_type: 'create_blaze', action: 'Logged Blaze and minted Burner', date: '2026-05-13', countsForStreak: true, branchId: 'br-01', sparkId: 'sp-100' }
 ];
 
 export const burner_ledger: BurnerLedger[] = [
