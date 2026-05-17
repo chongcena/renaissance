@@ -23,7 +23,7 @@ export function getBranchAttention(branches: Branch[], actions: ActionLog[], spa
 }
 
 export function getStageCounts(sparks: SparkItem[]) {
-  return { Spark: sparks.filter((spark) => spark.stage === 'Spark').length, Ember: sparks.filter((spark) => spark.stage === 'Ember').length, Fire: sparks.filter((spark) => spark.stage === 'Fire').length, Blaze: sparks.filter((spark) => spark.stage === 'Blaze').length };
+  return { Spark: sparks.filter((spark) => spark.stage === 'Spark').length, Ember: sparks.filter((spark) => spark.stage === 'Ember').length, Flame: sparks.filter((spark) => spark.stage === 'Flame').length, Blaze: sparks.filter((spark) => spark.stage === 'Blaze').length };
 }
 
 export function getHeatCalendar(actions: ActionLog[], daysBack = 42) {
@@ -48,7 +48,7 @@ export function getHeatCalendar(actions: ActionLog[], daysBack = 42) {
 export function getConversionData(sparks: SparkItem[], pathways: Pathway[], blazes: BlazeLog[]) {
   const sparksCaptured = sparks.length;
   const routedEmbers = sparks.filter((spark) => ['Ember', 'Fire', 'Blaze'].includes(spark.stage)).length;
-  const activeFires = sparks.filter((spark) => spark.stage === 'Fire' && spark.status === 'active').length;
+  const activeFires = sparks.filter((spark) => spark.stage === 'Flame' && spark.status === 'active').length;
   const releasedBlazes = blazes.length;
   return [ { name: 'Sparks', value: sparksCaptured }, { name: 'Routed Embers', value: routedEmbers }, { name: 'Active Fires', value: activeFires }, { name: 'Released Blazes', value: releasedBlazes } ];
 }

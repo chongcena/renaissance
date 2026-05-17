@@ -15,6 +15,7 @@ export type Goal = {
   status: GoalStatus;
   scale: 'year' | 'month' | 'week' | 'day';
   priorityWeight?: number;
+  scheduleBucket?: TimelineBucket;
   startDate?: string;
   dueDate?: string;
   currentAction?: string;
@@ -49,7 +50,6 @@ export type SparkItem = {
   updatedAt: string;
   last_touched_at: string;
   notes?: string;
-  currentAction?: string;
   manualPin?: boolean;
 };
 
