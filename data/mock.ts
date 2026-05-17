@@ -1,4 +1,4 @@
-import type { ActionLog, BlazeLog, Branch, BurnerLedger, Pathway, SparkItem } from './types';
+import type { ActionLog, BlazeLog, Branch, BurnerLedger, Pathway, SparkAttachment, SparkItem } from './types';
 
 export const branches: Branch[] = [
   { id: 'br-01', name: 'Music', focus: 'Hybrid ambient EP', strategicWeight: 40, role: 'Driver' },
@@ -9,6 +9,10 @@ export const branches: Branch[] = [
 export const spark_items: SparkItem[] = [
   { id: 'sp-100', title: 'Basement synth loop + rain foley', kind: 'audio note', branchId: 'br-01', stage: 'Spark', status: 'active', heatScore: 91, updatedAt: '2026-05-15', last_touched_at: '2026-05-15' },
   { id: 'sp-101', title: 'Essay: systems that make art inevitable', kind: 'text draft', branchId: 'br-02', stage: 'Ember', status: 'cooling', heatScore: 77, updatedAt: '2026-05-14', last_touched_at: '2026-05-12' }
+];
+
+export const spark_attachments: SparkAttachment[] = [
+  { id: 'att-01', sparkId: 'sp-100', name: 'Basement loop idea', type: 'note', textContent: 'Slow build with vinyl crackle and thunder textures.', createdAt: '2026-05-15' }
 ];
 
 export const pathways: Pathway[] = [

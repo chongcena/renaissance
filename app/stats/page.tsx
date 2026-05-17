@@ -1,6 +1,7 @@
 'use client';
 import Layout from '@/components/Layout';
 import { useStore } from '@/components/store';
+import { useState } from 'react';
 import { detectSolarFlares } from '@/lib/logic';
 import { getBranchAttention, getConversionData, getHeatCalendar, getStageCounts } from '@/lib/analytics';
 
@@ -11,6 +12,8 @@ export default function StatsPage() {
   const conversion = getConversionData(sparks, pathways, blazes);
   const calendar = getHeatCalendar(actions);
   const solarFlares = detectSolarFlares(sparks, pathways, blazes, actions, branches);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const selectedDay = calendar.find((d)=>d.date===selectedDate);
   const outputTypeMissing = blazes.every((blaze) => !blaze.title.includes('('));
   const tagsMissing = !branches.some((branch) => branch.tags?.length);
 
@@ -21,7 +24,7 @@ export default function StatsPage() {
     <Section title="Conversion Funnel">{conversion.map((item)=><Bar key={item.name} label={`${item.name}: ${item.value}`} value={Math.round((item.value / Math.max(conversion[0].value,1))*100)} />)}</Section>
     <Section title="Output Type Breakdown">{outputTypeMissing ? <Empty text="Release Blazes with output types to activate this chart." /> : <p className="text-sm text-muted">Output type data detected in released Blaze records.</p>}</Section>
     <Section title="Value Routing">{tagsMissing ? <Empty text="Add value tags to Sparks, Pathways, or Blazes to activate value routing." /> : <p className="text-sm text-muted">Value tags exist. Expand routing analytics next.</p>}</Section>
-    <Section title="Calendar Heat Map"><div className="grid grid-cols-7 gap-1">{calendar.map((day)=><div key={day.date} title={`${day.date}: ${day.count} meaningful action(s)`} className="h-6 rounded" style={{backgroundColor: day.count===0 ? '#1f2937' : day.count<2 ? '#78350f' : day.count<4 ? '#b45309' : '#f59e0b'}} />)}</div></Section>
+    <Section title="Calendar Heat Map">{calendar.every((day)=>day.score===0)?<Empty text="No meaningful creative actions logged yet."/>:<><div className="grid grid-cols-7 gap-1">{calendar.map((day)=><button key={day.date} title={`${day.date}: ${day.score} action score`} onClick={()=>setSelectedDate(day.date)} className="h-6 rounded" style={{backgroundColor: day.score===0 ? '#1f2937' : day.score<3 ? '#78350f' : day.score<6 ? '#b45309' : '#f59e0b'}} />)}</div>{selectedDay?<div className='mt-3 rounded border border-neon/30 p-2 text-xs'><p>{selectedDay.date}</p><p>Total action score: {selectedDay.score}</p><ul className='list-disc pl-4'>{selectedDay.actions.map((a,idx)=><li key={`${selectedDay.date}-${idx}`}>{a}</li>)}</ul></div>:null}</>}</Section>
     <Section title="Solar Flare Signals">{solarFlares.length ? <ul className="space-y-2 text-sm text-muted">{solarFlares.map((flare)=><li key={flare.id} className="rounded border border-neon/20 p-2"><p className="font-medium text-amber-100">{flare.title}</p><p>{flare.evidence.join(' ')}</p></li>)}</ul> : <Empty text="No repeatable flare evidence yet." />}</Section>
     <Section title="Action History"><ul className="space-y-1 text-sm text-muted">{actions.map((a)=><li key={a.id}>{a.date} • {a.action}</li>)}</ul></Section>
   </Layout>;

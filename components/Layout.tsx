@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 
 const nav = [
   ['Command', '/'],
-  ['Add Spark', '/add-spark'],
+  ['Capture', '/add-spark'],
   ['Vault', '/vault'],
   ['Branches', '/branches'],
   ['Stats', '/stats']
