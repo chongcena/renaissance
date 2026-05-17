@@ -17,5 +17,6 @@ export type SparkItem = {
 
 export type Pathway = { id: string; sparkId: string; lane: string; confidence: number; status: Status; last_touched_at: string };
 export type BlazeLog = { id: string; title: string; branchId: string; releasedAt: string; sparkId: string };
-export type ActionLog = { id: string; action: string; date: string };
+export type ActionType = 'capture' | 'route' | 'create_pathway' | 'activate_fire' | 'progress' | 'complete_move' | 'release' | 'create_blaze' | 'create_sun' | 'maintain_sun' | 'freeze' | 'kill' | 'archive';
+export type ActionLog = { id: string; action_type: ActionType; action: string; date: string; countsForStreak: boolean };
 export type BurnerLedger = { id: string; event: string; reason: string; date: string; delta: number };
