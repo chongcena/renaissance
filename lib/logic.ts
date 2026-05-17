@@ -14,7 +14,7 @@ export function calculateHeatSignal(spark: SparkItem, context: LogicContext) {
   const sparkPaths = context.pathways.filter((p) => p.sparkId === spark.id);
   const sparkBlazes = context.blazes.filter((b) => b.sparkId === spark.id);
   let score = 20;
-  if (branch) { score += branch.heatScore * 0.22; reasons.push(`Branch ${branch.name} has heat ${branch.heatScore}.`); }
+  if (branch) { score += branch.strategicWeight * 0.22; reasons.push(`Branch ${branch.name} strategic weight is ${branch.strategicWeight}%.`); }
   score += spark.stage === 'Spark' ? 0 : spark.stage === 'Ember' ? 10 : spark.stage === 'Fire' ? 20 : 8; reasons.push(`Lifecycle stage ${spark.stage} changes urgency.`);
   score += statusWeight[spark.status]; reasons.push(`Status ${spark.status} changes focus priority.`);
   const staleDays = daysSince(spark.last_touched_at);
