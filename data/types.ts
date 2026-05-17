@@ -5,7 +5,7 @@ export type PathwayStatus = 'possible' | 'chosen' | 'active' | 'completed' | 'fr
 export type TimelineBucket = 'today' | 'tomorrow' | 'this_week' | 'this_month' | 'later';
 
 export type BranchRole = 'Driver' | 'Audience Builder' | 'Strategic Flagship' | 'Maintenance' | 'Support';
-export type Branch = { id: string; name: string; focus: string; strategicWeight: number; role: BranchRole; frozen?: boolean; tags?: string[]; currentGoalId?: string };
+export type Branch = { id: string; name: string; focus: string; strategicWeight: number; role: BranchRole; color?: 'gold'|'orange'|'red'|'purple'|'blue'|'cyan'|'green'|'pink'|'neutral'; frozen?: boolean; tags?: string[]; currentGoalId?: string };
 
 export type GoalStatus = 'active' | 'paused' | 'complete';
 export type Goal = {

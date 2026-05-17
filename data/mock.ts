@@ -1,9 +1,9 @@
 import type { ActionLog, BlazeLog, Branch, BurnerLedger, Pathway, SparkAttachment, SparkItem } from './types';
 
 export const branches: Branch[] = [
-  { id: 'br-01', name: 'Music', focus: 'Hybrid ambient EP', strategicWeight: 40, role: 'Driver' },
-  { id: 'br-02', name: 'Writing', focus: 'Creative systems essays', strategicWeight: 35, role: 'Strategic Flagship' },
-  { id: 'br-03', name: 'Design Lab', focus: 'Visual identity experiments', strategicWeight: 25, role: 'Audience Builder', frozen: true }
+  { id: 'br-01', name: 'Music', focus: 'Hybrid ambient EP', strategicWeight: 40, role: 'Driver', color: 'gold' },
+  { id: 'br-02', name: 'Writing', focus: 'Creative systems essays', strategicWeight: 35, role: 'Strategic Flagship', color: 'purple' },
+  { id: 'br-03', name: 'Design Lab', focus: 'Visual identity experiments', strategicWeight: 25, role: 'Audience Builder', color: 'cyan', frozen: true }
 ];
 
 export const spark_items: SparkItem[] = [

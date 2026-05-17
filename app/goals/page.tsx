@@ -3,131 +3,15 @@ import { useMemo, useState } from 'react';
 import Layout from '@/components/Layout';
 import { useStore } from '@/components/store';
 import type { Goal, GoalStatus, TimelineBucket } from '@/data/types';
-
-const scales: Goal['scale'][] = ['year', 'month', 'week', 'day'];
-const statuses: GoalStatus[] = ['active', 'paused', 'complete'];
-const buckets: TimelineBucket[] = ['today', 'tomorrow', 'this_week', 'this_month', 'later'];
-
-type GoalDraft = {
-  title: string;
-  pillarId: string;
-  scale: Goal['scale'];
-  status: GoalStatus;
-  priorityWeight: string;
-  scheduleBucket: '' | TimelineBucket;
-  startDate: string;
-  dueDate: string;
-  currentAction: string;
-};
-
-const scaleLabels: Record<Goal['scale'], string> = {
-  year: 'Year Goals',
-  month: 'Month Goals',
-  week: 'Week Goals',
-  day: 'Day Goals / Today'
-};
-
-const emptyDraft = (pillarId = ''): GoalDraft => ({
-  title: '', pillarId, scale: 'week', status: 'active', priorityWeight: '', scheduleBucket: '', startDate: '', dueDate: '', currentAction: ''
-});
-
-export default function GoalsPage() {
-  const { goals, branches, createGoal, updateGoal } = useStore();
-  const [draft, setDraft] = useState<GoalDraft>(emptyDraft(branches[0]?.id ?? ''));
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingDraft, setEditingDraft] = useState<GoalDraft>(emptyDraft(branches[0]?.id ?? ''));
-
-  const groupedGoals = useMemo(
-    () => scales.map((scale) => ({ scale, goals: goals.filter((goal) => goal.scale === scale) })),
-    [goals]
-  );
-
-  const toPayload = (form: GoalDraft) => ({
-    title: form.title,
-    pillarId: form.pillarId,
-    scale: form.scale,
-    status: form.status,
-    priorityWeight: form.priorityWeight ? Number(form.priorityWeight) : undefined,
-    scheduleBucket: form.scheduleBucket || undefined,
-    startDate: form.startDate || undefined,
-    dueDate: form.dueDate || undefined,
-    currentAction: form.currentAction || undefined
-  });
-
-  const openEdit = (goal: Goal) => {
-    setEditingId(goal.id);
-    setEditingDraft({
-      title: goal.title,
-      pillarId: goal.pillarId,
-      scale: goal.scale,
-      status: goal.status,
-      priorityWeight: goal.priorityWeight?.toString() ?? '',
-      scheduleBucket: goal.scheduleBucket ?? '',
-      startDate: goal.startDate ?? '',
-      dueDate: goal.dueDate ?? '',
-      currentAction: goal.currentAction ?? ''
-    });
-  };
-
-  return <Layout><section className='space-y-4'>
-    <h2 className='text-2xl font-semibold tracking-tight'>Goals</h2>
-    <details className='rounded-xl border border-neon/20 bg-panelAlt/70 p-4' open>
-      <summary className='cursor-pointer text-sm font-medium text-amber-100'>Add Goal</summary>
-    <form className='mt-3 grid gap-2 sm:grid-cols-2' onSubmit={(e)=>{e.preventDefault(); if(!createGoal(toPayload(draft))) return; setDraft(emptyDraft(branches[0]?.id ?? ''));}}>
-      <input required value={draft.title} onChange={(e)=>setDraft((v)=>({...v,title:e.target.value}))} className='rounded bg-bg px-3 py-2' placeholder='Goal title' />
-      <select value={draft.pillarId} onChange={(e)=>setDraft((v)=>({...v,pillarId:e.target.value}))} className='rounded bg-bg px-3 py-2' required>
-        {branches.map((b)=><option value={b.id} key={b.id}>{b.name}</option>)}
-      </select>
-      <select value={draft.scale} onChange={(e)=>setDraft((v)=>({...v,scale:e.target.value as Goal['scale']}))} className='rounded bg-bg px-3 py-2'>{scales.map((s)=><option key={s} value={s}>{s}</option>)}</select>
-      <select value={draft.status} onChange={(e)=>setDraft((v)=>({...v,status:e.target.value as GoalStatus}))} className='rounded bg-bg px-3 py-2'>{statuses.map((s)=><option key={s} value={s}>{s}</option>)}</select>
-      <input value={draft.priorityWeight} onChange={(e)=>setDraft((v)=>({...v,priorityWeight:e.target.value}))} type='number' min={0} max={100} className='rounded bg-bg px-3 py-2' placeholder='Priority weight' />
-      <select value={draft.scheduleBucket} onChange={(e)=>setDraft((v)=>({...v,scheduleBucket:e.target.value as '' | TimelineBucket}))} className='rounded bg-bg px-3 py-2'>
-        <option value=''>No schedule bucket</option>{buckets.map((b)=><option key={b} value={b}>{b}</option>)}
-      </select>
-      <input type='date' value={draft.startDate} onChange={(e)=>setDraft((v)=>({...v,startDate:e.target.value}))} className='rounded bg-bg px-3 py-2' />
-      <input type='date' value={draft.dueDate} onChange={(e)=>setDraft((v)=>({...v,dueDate:e.target.value}))} className='rounded bg-bg px-3 py-2' />
-      <input value={draft.currentAction} onChange={(e)=>setDraft((v)=>({...v,currentAction:e.target.value}))} className='rounded bg-bg px-3 py-2 sm:col-span-2' placeholder='Current Action (optional)' />
-      <button className='rounded bg-neon px-3 py-2 font-semibold text-bg sm:col-span-2'>Save Goal</button>
-    </form>
-    </details>
-
-    {groupedGoals.map(({ scale, goals: bucketGoals })=><section key={scale} className='rounded-xl border border-neon/20 bg-panelAlt/65 p-4'>
-      <h3 className='text-sm uppercase text-neonDim'>{scaleLabels[scale]}</h3>
-      <div className='mt-2 space-y-2'>{bucketGoals.length===0 ? <p className='text-xs text-muted'>No goals yet.</p> : bucketGoals.map((g)=>{
-        const pillar=branches.find((b)=>b.id===g.pillarId);
-        const isEditing = editingId===g.id;
-        return <article key={g.id} className='rounded-lg border border-neon/15 bg-bg/20 p-3 text-sm space-y-2'>
-          {isEditing ? <div className='grid gap-2 sm:grid-cols-2'>
-            <input value={editingDraft.title} onChange={(e)=>setEditingDraft((v)=>({...v,title:e.target.value}))} className='rounded bg-bg px-2 py-1 sm:col-span-2' />
-            <select value={editingDraft.pillarId} onChange={(e)=>setEditingDraft((v)=>({...v,pillarId:e.target.value}))} className='rounded bg-bg px-2 py-1'>{branches.map((b)=><option key={b.id} value={b.id}>{b.name}</option>)}</select>
-            <select value={editingDraft.scale} onChange={(e)=>setEditingDraft((v)=>({...v,scale:e.target.value as Goal['scale']}))} className='rounded bg-bg px-2 py-1'>{scales.map((s)=><option key={s} value={s}>{s}</option>)}</select>
-            <select value={editingDraft.status} onChange={(e)=>setEditingDraft((v)=>({...v,status:e.target.value as GoalStatus}))} className='rounded bg-bg px-2 py-1'>{statuses.map((s)=><option key={s} value={s}>{s}</option>)}</select>
-            <input type='number' min={0} max={100} value={editingDraft.priorityWeight} onChange={(e)=>setEditingDraft((v)=>({...v,priorityWeight:e.target.value}))} className='rounded bg-bg px-2 py-1' placeholder='Priority weight' />
-            <select value={editingDraft.scheduleBucket} onChange={(e)=>setEditingDraft((v)=>({...v,scheduleBucket:e.target.value as '' | TimelineBucket}))} className='rounded bg-bg px-2 py-1'><option value=''>No schedule bucket</option>{buckets.map((b)=><option key={b} value={b}>{b}</option>)}</select>
-            <input type='date' value={editingDraft.startDate} onChange={(e)=>setEditingDraft((v)=>({...v,startDate:e.target.value}))} className='rounded bg-bg px-2 py-1' />
-            <input type='date' value={editingDraft.dueDate} onChange={(e)=>setEditingDraft((v)=>({...v,dueDate:e.target.value}))} className='rounded bg-bg px-2 py-1' />
-            <input value={editingDraft.currentAction} onChange={(e)=>setEditingDraft((v)=>({...v,currentAction:e.target.value}))} className='rounded bg-bg px-2 py-1 sm:col-span-2' placeholder='Current Action' />
-          </div> : <>
-            <p className='font-medium'>{g.title}</p>
-            <p className='text-xs text-muted'>{g.scale} • {pillar?.name ?? 'Unassigned'} • {g.status}</p>
-            <p className='text-xs text-neonDim'>
-              {g.priorityWeight !== undefined ? `Priority ${g.priorityWeight}` : 'No priority'}
-              {g.dueDate ? ` • Due ${g.dueDate}` : g.scheduleBucket ? ` • ${g.scheduleBucket}` : ''}
-              {g.currentAction ? ` • Current Action: ${g.currentAction}` : ''}
-            </p>
-          </>}
-          <div className='flex flex-wrap gap-2'>
-            {isEditing ? <>
-              <button onClick={()=>{updateGoal(g.id, toPayload(editingDraft)); setEditingId(null);}} className='rounded bg-neon px-2 py-1 text-xs text-bg'>Save</button>
-              <button onClick={()=>setEditingId(null)} className='rounded border border-neon/40 px-2 py-1 text-xs'>Cancel</button>
-            </> : <>
-              <button onClick={()=>openEdit(g)} className='rounded border border-neon/40 px-2 py-1 text-xs'>Edit</button>
-              <button onClick={()=>updateGoal(g.id,{status:'complete'})} className='rounded border border-neon/40 px-2 py-1 text-xs'>Mark Complete</button>
-              <button onClick={()=>updateGoal(g.id,{status:g.status==='paused'?'active':'paused'})} className='rounded border border-neon/40 px-2 py-1 text-xs'>{g.status==='paused' ? 'Resume' : 'Pause'}</button>
-            </>}
-          </div>
-        </article>;
-      })}</div>
-    </section>)}
-  </section></Layout>;
-}
+import { getPillarColor, pillarColorStyles } from '@/lib/ui';
+const scales: Goal['scale'][] = ['year', 'month', 'week', 'day']; const statuses: GoalStatus[] = ['active', 'paused', 'complete']; const buckets: TimelineBucket[] = ['today','tomorrow','this_week','this_month','later'];
+export default function GoalsPage(){ const { goals, branches, createGoal, updateGoal } = useStore(); const [selectedDate,setSelectedDate]=useState(new Date().toISOString().slice(0,10)); const [draft,setDraft]=useState({title:'',pillarId:branches[0]?.id ?? '',scale:'week' as Goal['scale'],status:'active' as GoalStatus,scheduleBucket:'' as ''|TimelineBucket,startDate:'',dueDate:'',currentAction:''});
+ const grouped=useMemo(()=>scales.map((scale)=>({scale,goals:goals.filter((g)=>g.scale===scale)})),[goals]);
+ const month=useMemo(()=>{const n=new Date();const y=n.getUTCFullYear();const m=n.getUTCMonth();const days=new Date(Date.UTC(y,m+1,0)).getUTCDate();const first=new Date(Date.UTC(y,m,1)).getUTCDay();const cells:Array<string|null>=Array.from({length:first},()=>null);for(let d=1;d<=days;d++)cells.push(new Date(Date.UTC(y,m,d)).toISOString().slice(0,10));return {label:n.toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'}),cells};},[]);
+ const eventsByDate=useMemo(()=>{const map=new Map<string,Goal[]>(); goals.forEach((g)=>{if(g.scale==='year') return; const dates:string[]=[]; if(g.dueDate) dates.push(g.dueDate); else if(g.scale==='day'&&g.startDate) dates.push(g.startDate); else if(g.scale==='week'&&g.startDate){const st=new Date(g.startDate+'T00:00:00Z'); for(let i=0;i<7;i++){const d=new Date(st); d.setUTCDate(st.getUTCDate()+i); dates.push(d.toISOString().slice(0,10));}} else if(g.scheduleBucket==='today') dates.push(new Date().toISOString().slice(0,10));
+ dates.forEach((d)=>map.set(d,[...(map.get(d)??[]),g]));}); return map;},[goals]);
+ const selected=eventsByDate.get(selectedDate)??[];
+ return <Layout><h2 className='text-2xl font-semibold tracking-tight'>Goals</h2><details className='mt-3 rounded-xl border border-neon/20 bg-panelAlt/70 p-4' open><summary>Add Goal</summary><form className='mt-3 grid gap-2 sm:grid-cols-2' onSubmit={(e)=>{e.preventDefault(); createGoal({...draft, scheduleBucket:draft.scheduleBucket || undefined, startDate:draft.startDate||undefined,dueDate:draft.dueDate||undefined,currentAction:draft.currentAction||undefined}); setDraft({...draft,title:'',currentAction:'',startDate:'',dueDate:''});}}><input required value={draft.title} onChange={(e)=>setDraft((v)=>({...v,title:e.target.value}))} className='rounded bg-bg px-3 py-2' placeholder='Goal title'/><select value={draft.pillarId} onChange={(e)=>setDraft((v)=>({...v,pillarId:e.target.value}))} className='rounded bg-bg px-3 py-2'>{branches.map((b)=><option key={b.id} value={b.id}>{b.name}</option>)}</select><select value={draft.scale} onChange={(e)=>setDraft((v)=>({...v,scale:e.target.value as Goal['scale']}))} className='rounded bg-bg px-3 py-2'>{scales.map((s)=><option key={s}>{s}</option>)}</select><select value={draft.status} onChange={(e)=>setDraft((v)=>({...v,status:e.target.value as GoalStatus}))} className='rounded bg-bg px-3 py-2'>{statuses.map((s)=><option key={s}>{s}</option>)}</select><select value={draft.scheduleBucket} onChange={(e)=>setDraft((v)=>({...v,scheduleBucket:e.target.value as ''|TimelineBucket}))} className='rounded bg-bg px-3 py-2'><option value=''>Schedule bucket</option>{buckets.map((b)=><option key={b}>{b}</option>)}</select><input type='date' value={draft.startDate} onChange={(e)=>setDraft((v)=>({...v,startDate:e.target.value}))} className='rounded bg-bg px-3 py-2'/><input type='date' value={draft.dueDate} onChange={(e)=>setDraft((v)=>({...v,dueDate:e.target.value}))} className='rounded bg-bg px-3 py-2'/><input value={draft.currentAction} onChange={(e)=>setDraft((v)=>({...v,currentAction:e.target.value}))} className='rounded bg-bg px-3 py-2 sm:col-span-2' placeholder='Current Action'/><button className='rounded bg-neon px-3 py-2 text-bg sm:col-span-2'>Save Goal</button></form></details>
+ {grouped.map(({scale,goals:items})=><section key={scale} className='mt-3 rounded-xl border border-neon/20 bg-panelAlt/65 p-4'><h3 className='text-sm uppercase text-neonDim'>{scale==='day'?'Day Goals / Today':`${scale[0].toUpperCase()+scale.slice(1)} Goals`}</h3><div className='mt-2 space-y-2'>{items.map((g)=>{const br=branches.find((b)=>b.id===g.pillarId);const st=pillarColorStyles[getPillarColor(br)];return <article key={g.id} className={`rounded-lg border border-neon/15 bg-bg/20 p-3 text-sm ${st.border}`}><p className='font-medium'>{g.title}</p><p className='text-xs text-muted'>{g.scale} • {g.status}</p><div className='mt-1 flex flex-wrap gap-2 text-xs'><span className={`rounded-full border px-2 py-0.5 ${st.chip}`}>{br?.name ?? 'Pillar'}</span>{g.currentAction?<span className='rounded-full border border-neon/20 px-2 py-0.5'>Current Action: {g.currentAction}</span>:null}{g.dueDate?<span className='rounded-full border border-neon/20 px-2 py-0.5'>Due {g.dueDate}</span>:null}</div><div className='mt-2 flex gap-2 text-xs'><button onClick={()=>updateGoal(g.id,{status:'complete'})} className='rounded border border-neon/40 px-2 py-1'>Complete</button><button onClick={()=>updateGoal(g.id,{status:g.status==='paused'?'active':'paused'})} className='rounded border border-neon/40 px-2 py-1'>{g.status==='paused'?'Resume':'Pause'}</button></div></article>;})}</div></section>)}
+ <section className='mt-4 rounded-xl border border-neon/20 bg-panelAlt/70 p-4'><h3 className='text-sm uppercase text-neonDim'>Schedule Calendar</h3><div className='mt-2 rounded-lg border border-neon/20 p-3'><p className='mb-2 text-sm font-medium'>{month.label}</p><div className='grid grid-cols-7 gap-2'>{month.cells.map((date,idx)=>date?<button key={date} onClick={()=>setSelectedDate(date)} className={`min-h-16 rounded border p-1 text-left text-xs ${selectedDate===date?'border-amber-200':'border-neon/20'}`}><p>{Number(date.slice(-2))}</p><div className='mt-1 space-y-1'>{(eventsByDate.get(date)??[]).slice(0,2).map((g)=>{const st=pillarColorStyles[getPillarColor(branches.find((b)=>b.id===g.pillarId))]; return <p key={g.id} className={`rounded border px-1 ${st.calendar}`}>{g.title}</p>;})}</div></button>:<div key={`empty-${idx}`} className='min-h-16 rounded border border-transparent'/> )}</div></div>
+ <div className='mt-3 rounded-lg border border-neon/20 p-3 text-sm'><p className='font-medium'>{selectedDate}</p>{selected.length?<ul className='mt-2 space-y-2'>{selected.map((g)=>{const br=branches.find((b)=>b.id===g.pillarId);const st=pillarColorStyles[getPillarColor(br)];return <li key={`${g.id}-detail`} className='rounded border border-neon/20 p-2'><p>{g.title}</p><p className='text-xs text-muted'>{g.scale} • {g.status}</p><p className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-xs ${st.chip}`}>{br?.name ?? 'Pillar'}</p>{g.currentAction?<p className='text-xs text-neonDim'>Current Action: {g.currentAction}</p>:null}</li>;})}</ul>:<p className='text-xs text-muted'>No scheduled goals for this day.</p>}</div></section></Layout> }

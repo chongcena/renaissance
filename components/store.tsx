@@ -2,10 +2,11 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import { action_log, blaze_logs, branches as seedBranches, burner_ledger, pathways, spark_attachments, spark_items } from '@/data/mock';
 import type { ActionLog, BlazeLog, Branch, BranchRole, BurnerLedger, Goal, GoalStatus, Pathway, SparkAttachment, SparkItem, TimelineBucket } from '@/data/types';
+import { PILLAR_COLORS } from '@/lib/ui';
 
 type Store = {
   branches: Branch[]; goals: Goal[]; sparks: SparkItem[]; attachments: SparkAttachment[]; pathways: Pathway[]; blazes: BlazeLog[]; actions: ActionLog[]; burners: BurnerLedger[];
-  createBranch: (input: { name: string; focus: string; strategicWeight: number; role: BranchRole; tags?: string[] }) => string | null;
+  createBranch: (input: { name: string; focus: string; strategicWeight: number; role: BranchRole; color?: Branch['color']; tags?: string[] }) => string | null;
   updateBranch: (id: string, patch: Partial<Branch>) => void;
   createGoal: (input: { title: string; pillarId: string; scale: Goal['scale']; status: GoalStatus; priorityWeight?: number; scheduleBucket?: TimelineBucket; startDate?: string; dueDate?: string; currentAction?: string }) => string | null;
   updateGoal: (id: string, patch: Partial<Goal>) => void;
@@ -26,7 +27,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<Store>(() => ({
     branches, goals, sparks, attachments, pathways: paths, blazes, actions, burners,
-    createBranch: ({ name, focus, strategicWeight, role, tags }) => { const n=name.trim(); if(!n) return null; const next={ id:id('br'), name:n, focus:focus.trim(), strategicWeight:Math.max(0,Math.min(100,strategicWeight)), role, tags:tags?.filter(Boolean)??[] }; setBranches((b)=>[next,...b]); appendAction('progress',`Created Branch: ${next.name}`); return next.id; },
+    createBranch: ({ name, focus, strategicWeight, role, color, tags }) => { const n=name.trim(); if(!n) return null; const fallbackColor = PILLAR_COLORS[(branches.length % PILLAR_COLORS.length)] as Branch['color']; const next={ id:id('br'), name:n, focus:focus.trim(), strategicWeight:Math.max(0,Math.min(100,strategicWeight)), role, color: color ?? fallbackColor, tags:tags?.filter(Boolean)??[] }; setBranches((b)=>[next,...b]); appendAction('progress',`Created Branch: ${next.name}`); return next.id; },
     updateBranch: (bid, patch) => { setBranches((b)=>b.map((i)=>(i.id===bid?{...i,...patch}:i))); appendAction('progress', `Updated Pillar: ${(branches.find((b)=>b.id===bid)?.name) ?? bid}`); },
     createGoal: ({ title, pillarId, scale, status, priorityWeight, scheduleBucket, startDate, dueDate, currentAction }) => { const t=title.trim(); if(!t) return null; const next={id:id('gl'), title:t, pillarId, scale, status, priorityWeight, scheduleBucket, startDate, dueDate, currentAction: currentAction?.trim()}; setGoals((g)=>[next,...g]); appendAction('progress',`Created Goal: ${t}`,true,{branchId:pillarId}); return next.id; },
     updateGoal: (gid, patch) => { const normalized={...patch, currentAction: patch.currentAction?.trim()}; setGoals((g)=>g.map((item)=>item.id===gid?{...item,...normalized}:item)); appendAction('progress',`Updated Goal: ${gid}`); },
