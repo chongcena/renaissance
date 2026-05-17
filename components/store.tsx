@@ -10,7 +10,7 @@ type Store = {
   blazes: BlazeLog[];
   actions: ActionLog[];
   burners: BurnerLedger[];
-  createSpark: (input: Pick<SparkItem, 'title' | 'kind' | 'branchId' | 'notes'>) => boolean;
+  createSpark: (input: Pick<SparkItem, 'title' | 'kind' | 'branchId' | 'notes'>) => string | null;
   routeSpark: (sparkId: string) => void;
   activateFire: (sparkId: string) => void;
   freezeSpark: (sparkId: string) => void;
@@ -47,11 +47,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     burners,
     createSpark: (input) => {
       const trimmedTitle = input.title.trim();
-      if (!trimmedTitle) return false;
+      if (!trimmedTitle) return null;
       const next: SparkItem = { id: id('sp'), title: trimmedTitle, kind: input.kind, branchId: input.branchId, notes: input.notes, stage: 'Spark', status: 'new', heatScore: 50, updatedAt: today(), last_touched_at: today() };
       setSparks((s) => [next, ...s]);
       appendAction('capture', `Created Spark: ${next.title}`);
-      return true;
+      return next.id;
     },
     routeSpark: (sparkId) => {
       setSparks((s) => s.map((i) => i.id === sparkId ? { ...i, stage: 'Ember', updatedAt: today(), last_touched_at: today() } : i));
