@@ -26,7 +26,6 @@ type Store = {
 const Ctx = createContext<Store | null>(null);
 const today = () => new Date().toISOString().slice(0, 10);
 const id = (p: string) => `${p}-${Math.random().toString(36).slice(2, 8)}`;
-const STREAK_ACTIONS = new Set(['capture', 'route', 'create_pathway', 'activate_fire', 'progress', 'complete_move', 'release', 'create_blaze', 'create_sun', 'maintain_sun', 'freeze', 'kill', 'archive']);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [branches, setBranches] = useState<Branch[]>(seedBranches);
@@ -81,6 +80,3 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 }
 
 export const useStore = () => { const ctx = useContext(Ctx); if (!ctx) throw new Error('useStore within StoreProvider'); return ctx; };
-export const getMomentumStreak = (actions: ActionLog[]) => { const streakDays = new Set(actions.filter((a) => a.countsForStreak && STREAK_ACTIONS.has(a.action_type)).map((a) => a.date)); let streak = 0; const cursor = new Date(); while (streakDays.has(cursor.toISOString().slice(0, 10))) { streak += 1; cursor.setDate(cursor.getDate() - 1); } return streak; };
-export const getCoolDownWarning = (lastTouched: string, status: Status) => { if (['frozen', 'archived', 'killed'].includes(status)) return null; const diff = Math.floor((Date.now() - new Date(lastTouched).getTime()) / 86400000); if (diff >= 5) return `Cooling warning: untouched for ${diff} days`; return null; };
-export const getSolarFlares = (sparks: SparkItem[], blazes: BlazeLog[]) => { const byBranch = sparks.reduce<Record<string, number>>((acc, s) => ({ ...acc, [s.branchId]: (acc[s.branchId] ?? 0) + 1 }), {}); return Object.entries(byBranch).filter(([, c]) => c >= 2).map(([b, c]) => `Solar Flare: Branch ${b} has repeated spark volume (${c})`).concat(blazes.length >= 2 ? [`Solar Flare: ${blazes.length} total blazes indicate a forming Sun pattern`] : []); };
