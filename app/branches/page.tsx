@@ -20,7 +20,7 @@ export default function BranchesPage() {
   const weightWarning = totalWeight > 100 ? `Strategic weights total ${totalWeight}%. Rebalance attention allocations.` : totalWeight < 100 ? `Strategic weights total ${totalWeight}%. Allocate the remaining ${100 - totalWeight}%.` : null;
   const branchAttention = useMemo(() => getBranchAttention(branches, actions, sparks), [branches, actions, sparks]);
 
-  return <Layout><h2 className="mb-4 text-xl font-semibold">Creative Branches</h2>
+  return <Layout><h2 className="mb-4 text-xl font-semibold">Branches</h2>
     <p className="mb-2 text-sm text-ember">Strategic Weight Used: {totalWeight}%</p>
     {weightWarning && <p className="mb-4 rounded border border-fire/50 bg-fire/10 p-2 text-sm text-fire">{weightWarning}</p>}
     <form className="mb-4 grid gap-2 rounded-xl border border-neon/40 bg-panelAlt/85 p-4 sm:grid-cols-2" onSubmit={(e)=>{e.preventDefault();if(!createBranch({name,focus,strategicWeight,role})) return; setName('');setFocus('');setStrategicWeight(20);setRole('Support');}}>
@@ -34,7 +34,7 @@ export default function BranchesPage() {
       const attention = branchAttention.find((item) => item.id === branch.id);
       const isEditing = editing === branch.id;
       return <article key={branch.id} className="rounded-xl border border-neon/40 bg-panelAlt/85 p-4"><h3 className="text-lg font-semibold">{isEditing ? <input value={(draft.name ?? branch.name)} onChange={(e)=>setDraft((d)=>({ ...d, name: e.target.value }))} className="w-full rounded bg-bg px-2 py-1" /> : branch.name}</h3>
-        <p className="mt-1 text-xs text-neonDim">Lane Role: {isEditing ? <select value={(draft.role ?? branch.role)} onChange={(e)=>setDraft((d)=>({ ...d, role: e.target.value as BranchRole }))} className="ml-2 rounded bg-bg px-2 py-1 text-xs">{ROLES.map((r)=><option key={r} value={r}>{r}</option>)}</select> : branch.role}</p>
+        <p className="mt-1 text-xs text-neonDim">Branch Lane: {isEditing ? <select value={(draft.role ?? branch.role)} onChange={(e)=>setDraft((d)=>({ ...d, role: e.target.value as BranchRole }))} className="ml-2 rounded bg-bg px-2 py-1 text-xs">{ROLES.map((r)=><option key={r} value={r}>{r}</option>)}</select> : branch.role}</p>
         <p className="mt-2 text-sm text-fire">Strategic Weight: {isEditing ? <input type="number" min={0} max={100} value={(draft.strategicWeight ?? branch.strategicWeight)} onChange={(e)=>setDraft((d)=>({ ...d, strategicWeight: Number(e.target.value) }))} className="ml-2 w-20 rounded bg-bg px-2 py-1" /> : `${branch.strategicWeight}%`}</p>
         <p className="text-sm text-amber-200">Actual Attention: {attention?.actual ?? 0}%</p><p className="text-xs text-muted">Alignment: {attention?.status ?? 'balanced'}</p>
         <p className="mt-2 text-sm text-muted">{isEditing ? <input value={(draft.focus ?? branch.focus)} onChange={(e)=>setDraft((d)=>({ ...d, focus: e.target.value }))} className="w-full rounded bg-bg px-2 py-1" /> : branch.focus || 'No focus objective set yet.'}</p>
