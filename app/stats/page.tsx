@@ -1,42 +1,33 @@
 'use client';
 import Layout from '@/components/Layout';
 import { useStore } from '@/components/store';
+import { detectSolarFlares } from '@/lib/logic';
+import { getBranchAttention, getConversionData, getHeatCalendar, getStageCounts } from '@/lib/analytics';
 
 export default function StatsPage() {
-  const { actions, blazes, sparks, branches } = useStore();
-  const actionable = actions.filter((a) => a.countsForStreak);
-  const totalActions = actionable.length || 1;
-  const stageCounts = {
-    Spark: sparks.filter((s) => s.stage === 'Spark').length,
-    Ember: sparks.filter((s) => s.stage === 'Ember').length,
-    Fire: sparks.filter((s) => s.stage === 'Fire').length,
-    Blaze: sparks.filter((s) => s.stage === 'Blaze').length
-  };
-  const bottleneck = stageCounts.Spark > stageCounts.Ember ? 'Many Sparks are captured but not routed.' : stageCounts.Fire > 0 && stageCounts.Blaze < stageCounts.Fire ? 'Few Fires are reaching Blaze.' : 'Stage flow is currently balanced.';
-
-  const attentionRouting = branches.map((b) => {
-    const count = actionable.filter((a) => a.branchId === b.id).length;
-    const actual = Math.round((count / totalActions) * 100);
-    const diff = actual - b.strategicWeight;
-    const status = diff > 8 ? 'over-consuming' : diff < -8 ? 'underfed' : 'balanced';
-    return { ...b, actual, diff, status };
-  });
-
-  const byDate = new Map<string, number>();
-  actionable.forEach((a) => byDate.set(a.date, (byDate.get(a.date) ?? 0) + 1));
-  const days = Array.from(byDate.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  const { actions, blazes, sparks, branches, pathways } = useStore();
+  const attentionRouting = getBranchAttention(branches, actions, sparks);
+  const stageCounts = getStageCounts(sparks);
+  const conversion = getConversionData(sparks, pathways, blazes);
+  const calendar = getHeatCalendar(actions);
+  const solarFlares = detectSolarFlares(sparks, pathways, blazes, actions, branches);
+  const outputTypeMissing = blazes.every((blaze) => !blaze.title.includes('('));
+  const tagsMissing = !branches.some((branch) => branch.tags?.length);
 
   return <Layout><h2 className="mb-4 text-xl font-semibold">Stats & Insights</h2>
-    <Panel title="Attention Routing" items={attentionRouting.map((r) => `${r.name}: Planned ${r.strategicWeight}% • Actual ${r.actual}% • Δ ${r.diff}% • ${r.status}`)} />
-    <Panel title="Stage Flow" items={[`Spark: ${stageCounts.Spark}`, `Ember: ${stageCounts.Ember}`, `Fire: ${stageCounts.Fire}`, `Blaze: ${stageCounts.Blaze}`, bottleneck]} />
-    <Panel title="Conversion Funnel" items={[`Sparks captured: ${stageCounts.Spark + stageCounts.Ember + stageCounts.Fire + stageCounts.Blaze}`, `Routed Embers: ${stageCounts.Ember + stageCounts.Fire + stageCounts.Blaze}`, `Active Fires: ${sparks.filter((s)=>s.stage==='Fire'&&s.status==='active').length}`, `Released Blazes: ${blazes.length}`]} />
-    <Panel title="Output Type Breakdown (Preview)" items={[`Preview: Blaze Logs need structured outputType field per release.`, `Current blaze records: ${blazes.length}`]} />
-    <Panel title="Value Routing (Preview)" items={[`Preview: We need value tags connected to sparks/pathways/actions.`, `Current branch tag sets: ${branches.filter((b)=>b.tags?.length).length}`]} />
-    <Panel title="Calendar Heat Map" items={days.length ? days.map(([day, count]) => `${day} ${'■'.repeat(Math.min(count, 8))} (${count})`) : ['Preview: Add more Action Log day coverage to render a useful heat map.']} />
-    <Panel title="Action History" items={actions.map((a) => `${a.date} • ${a.action}`)} />
+    <Section title="Branch Allocation">{branches.map((b)=><Bar key={b.id} label={`${b.name} ${b.strategicWeight}%`} value={b.strategicWeight} />)}</Section>
+    <Section title="Planned vs Actual Attention">{attentionRouting.map((b)=><DualBar key={b.id} label={`${b.name} • ${b.status}`} planned={b.strategicWeight} actual={b.actual} />)}</Section>
+    <Section title="Stage Flow"><div className="grid grid-cols-4 gap-2 text-center text-xs">{(['Spark', 'Ember', 'Fire', 'Blaze'] as const).map((key)=><div key={key} className="rounded border border-neon/30 p-2"><p className="text-neonDim">{key}</p><p className="text-xl font-semibold text-amber-100">{stageCounts[key]}</p></div>)}</div></Section>
+    <Section title="Conversion Funnel">{conversion.map((item)=><Bar key={item.name} label={`${item.name}: ${item.value}`} value={Math.round((item.value / Math.max(conversion[0].value,1))*100)} />)}</Section>
+    <Section title="Output Type Breakdown">{outputTypeMissing ? <Empty text="Release Blazes with output types to activate this chart." /> : <p className="text-sm text-muted">Output type data detected in released Blaze records.</p>}</Section>
+    <Section title="Value Routing">{tagsMissing ? <Empty text="Add value tags to Sparks, Pathways, or Blazes to activate value routing." /> : <p className="text-sm text-muted">Value tags exist. Expand routing analytics next.</p>}</Section>
+    <Section title="Calendar Heat Map"><div className="grid grid-cols-7 gap-1">{calendar.map((day)=><div key={day.date} title={`${day.date}: ${day.count} meaningful action(s)`} className="h-6 rounded" style={{backgroundColor: day.count===0 ? '#1f2937' : day.count<2 ? '#78350f' : day.count<4 ? '#b45309' : '#f59e0b'}} />)}</div></Section>
+    <Section title="Solar Flare Signals">{solarFlares.length ? <ul className="space-y-2 text-sm text-muted">{solarFlares.map((flare)=><li key={flare.id} className="rounded border border-neon/20 p-2"><p className="font-medium text-amber-100">{flare.title}</p><p>{flare.evidence.join(' ')}</p></li>)}</ul> : <Empty text="No repeatable flare evidence yet." />}</Section>
+    <Section title="Action History"><ul className="space-y-1 text-sm text-muted">{actions.map((a)=><li key={a.id}>{a.date} • {a.action}</li>)}</ul></Section>
   </Layout>;
 }
 
-function Panel({ title, items }: { title: string; items: string[] }) {
-  return <section className="mb-3 rounded-xl border border-neon/40 bg-panelAlt/85 p-4"><h3 className="text-sm uppercase tracking-widest text-neonDim">{title}</h3><ul className="mt-3 space-y-2 text-sm text-muted">{items.map((item, index) => <li key={`${title}-${index}`}>{item}</li>)}</ul></section>;
-}
+function Section({ title, children }: { title: string; children: React.ReactNode }) { return <section className="mb-3 rounded-xl border border-neon/40 bg-panelAlt/85 p-4"><h3 className="text-sm uppercase tracking-widest text-neonDim">{title}</h3><div className="mt-3 space-y-2">{children}</div></section>; }
+function Empty({ text }: { text: string }) { return <p className="rounded border border-neon/20 bg-bg/50 p-3 text-sm text-muted">{text}</p>; }
+function Bar({ label, value }: { label: string; value: number }) { return <div><div className="mb-1 flex justify-between text-sm"><span>{label}</span><span>{value}%</span></div><div className="h-2 rounded bg-bg"><div className="h-2 rounded bg-amber-500" style={{width:`${Math.min(100, value)}%`}} /></div></div>; }
+function DualBar({ label, planned, actual }: { label: string; planned: number; actual: number }) { return <div><p className="mb-1 text-sm">{label}</p><div className="relative h-3 rounded bg-bg"><div className="absolute h-3 rounded bg-amber-500/70" style={{width:`${planned}%`}} /><div className="absolute h-3 rounded bg-orange-400/80" style={{width:`${actual}%`}} /></div><p className="mt-1 text-xs text-muted">Planned {planned}% vs Actual {actual}%</p></div>; }
