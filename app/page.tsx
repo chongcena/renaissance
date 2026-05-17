@@ -2,6 +2,7 @@
 import Layout from '@/components/Layout';
 import { useStore } from '@/components/store';
 import { getMomentumStreakSummary } from '@/lib/logic';
+import { derivePriorityChip, getPillarColor, pillarColorStyles } from '@/lib/ui';
 
 export default function HomePage() {
   const { sparks, actions, burners, goals, branches, blazes } = useStore();
@@ -10,6 +11,8 @@ export default function HomePage() {
   const todayGoal = goals.find((g) => g.scale === 'day' && g.status === 'active' && g.currentAction);
   const todaySpark = sparks.find((s) => s.scheduleBucket === 'today' && s.currentAction && s.status !== 'frozen');
   const todayAction = todayGoal?.currentAction || todaySpark?.currentAction;
+  const heroPriority = todaySpark ? derivePriorityChip(todaySpark, goals) : (todayGoal ? 'High Priority' : 'Low Priority');
+  const heroStyle = pillarColorStyles[getPillarColor(branches.find((b)=>b.id===todaySpark?.branchId || b.id===todayGoal?.pillarId))];
   const upNextSparks = sparks.filter((s) => s.status === 'active' && s.currentAction && s.id !== todaySpark?.id).slice(0, 4);
   const cooling = sparks.filter((s) => s.status === 'cooling').slice(0, 4);
   const recentSparks = sparks.slice(0, 4);
@@ -17,10 +20,10 @@ export default function HomePage() {
 
   return <Layout><section className='space-y-4'>
     <h2 className='text-2xl font-semibold tracking-tight'>Command</h2>
-    <section className='rounded-2xl border border-neon/25 bg-gradient-to-br from-panelAlt/95 to-panel/70 p-5 shadow-glow'>
+    <section className={`rounded-2xl border border-neon/25 bg-gradient-to-br from-panelAlt/95 to-panel/70 p-5 shadow-glow ${heroStyle.glow} ${heroStyle.border}`}>
       <p className='text-xs uppercase tracking-[0.22em] text-neonDim'>Current Action</p>
       <p className='mt-3 text-2xl font-semibold text-amber-100'>{todayAction || 'No action locked. Choose a Day Goal or assign a Current Action.'}</p>
-      {todaySpark ? <p className='mt-2 text-sm text-muted'>{todaySpark.title} • {pillar || 'Pillar'} • {todaySpark.stage}</p> : null}
+      <p className='mt-2 inline-flex rounded-full border border-neon/30 px-2 py-0.5 text-xs'>{heroPriority}</p>{todaySpark ? <p className='mt-2 text-sm text-muted'>{todaySpark.title} • {pillar || 'Pillar'} • {todaySpark.stage}</p> : null}
     </section>
     <div className='grid gap-3 sm:grid-cols-4'>
       <Stat title='Momentum' value={`${actions.filter((a) => a.countsForStreak).length}`} />
