@@ -1,32 +1,53 @@
 'use client';
 import Layout from '@/components/Layout';
 import { useStore } from '@/components/store';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { detectSolarFlares } from '@/lib/logic';
 import { getBranchAttention, getConversionData, getHeatCalendar, getStageCounts } from '@/lib/analytics';
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function StatsPage() {
   const { actions, blazes, sparks, branches, pathways } = useStore();
   const attentionRouting = getBranchAttention(branches, actions, sparks);
   const stageCounts = getStageCounts(sparks);
   const conversion = getConversionData(sparks, pathways, blazes);
-  const calendar = getHeatCalendar(actions);
+  const calendar = getHeatCalendar(actions, 120);
   const solarFlares = detectSolarFlares(sparks, pathways, blazes, actions, branches);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const selectedDay = calendar.find((d)=>d.date===selectedDate);
   const outputTypeMissing = blazes.every((blaze) => !blaze.title.includes('('));
   const tagsMissing = !branches.some((branch) => branch.tags?.length);
 
+  const monthView = useMemo(() => {
+    const now = new Date();
+    const year = now.getUTCFullYear();
+    const month = now.getUTCMonth();
+    const monthLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    const firstWeekday = new Date(Date.UTC(year, month, 1)).getUTCDay();
+    const byDate = new Map(calendar.map((day) => [day.date, day]));
+
+    const cells: Array<{ date: string; day: number; score: number; actions: string[] } | null> = Array.from({ length: firstWeekday }, () => null);
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      const isoDate = new Date(Date.UTC(year, month, day)).toISOString().slice(0, 10);
+      const found = byDate.get(isoDate);
+      cells.push({ date: isoDate, day, score: found?.score ?? 0, actions: found?.actions ?? [] });
+    }
+    return { monthLabel, cells };
+  }, [calendar]);
+
+  const selectedDay = monthView.cells.find((d) => d && d.date === selectedDate) ?? null;
+
   return <Layout><h2 className="mb-4 text-xl font-semibold">Progress Analytics / Stats</h2>
-    <Section title="Skill Tree Allocation">{branches.map((b)=><Bar key={b.id} label={`${b.name} ${b.strategicWeight}%`} value={b.strategicWeight} />)}</Section>
+    <Section title="Branch Allocation">{branches.map((b)=><Bar key={b.id} label={`${b.name} ${b.strategicWeight}%`} value={b.strategicWeight} />)}</Section>
     <Section title="Planned vs Actual Focus">{attentionRouting.map((b)=><DualBar key={b.id} label={`${b.name} • ${b.status}`} planned={b.strategicWeight} actual={b.actual} />)}</Section>
     <Section title="Asset Evolution Flow"><div className="grid grid-cols-4 gap-2 text-center text-xs">{(['Spark', 'Ember', 'Fire', 'Blaze'] as const).map((key)=><div key={key} className="rounded border border-neon/30 p-2"><p className="text-neonDim">{key}</p><p className="text-xl font-semibold text-amber-100">{stageCounts[key]}</p></div>)}</div></Section>
     <Section title="Capture-to-Release Funnel">{conversion.map((item)=><Bar key={item.name} label={`${item.name}: ${item.value}`} value={Math.round((item.value / Math.max(conversion[0].value,1))*100)} />)}</Section>
     <Section title="Released Output Types">{outputTypeMissing ? <Empty text="Release Blazes with output types to activate this chart." /> : <p className="text-sm text-muted">Output type data detected in released Blaze records.</p>}</Section>
     <Section title="Value Distribution">{tagsMissing ? <Empty text="Add value tags to Sparks, Pathways, or Blazes to activate value routing." /> : <p className="text-sm text-muted">Value tags exist. Expand routing analytics next.</p>}</Section>
-    <Section title="Momentum Map">{calendar.every((day)=>day.score===0)?<Empty text="No meaningful creative actions logged yet."/>:<><div className="grid grid-cols-7 gap-1">{calendar.map((day)=><button key={day.date} title={`${day.date}: ${day.score} action score`} onClick={()=>setSelectedDate(day.date)} className="h-6 rounded" style={{backgroundColor: day.score===0 ? '#1f2937' : day.score<3 ? '#78350f' : day.score<6 ? '#b45309' : '#f59e0b'}} />)}</div>{selectedDay?<div className='mt-3 rounded border border-neon/30 p-2 text-xs'><p>{selectedDay.date}</p><p>Total action score: {selectedDay.score}</p><ul className='list-disc pl-4'>{selectedDay.actions.map((a,idx)=><li key={`${selectedDay.date}-${idx}`}>{a}</li>)}</ul></div>:null}</>}</Section>
-    <Section title="System Unlock Signals">{solarFlares.length ? <ul className="space-y-2 text-sm text-muted">{solarFlares.map((flare)=><li key={flare.id} className="rounded border border-neon/20 p-2"><p className="font-medium text-amber-100">{flare.title}</p><p>{flare.evidence.join(' ')}</p></li>)}</ul> : <Empty text="No repeatable flare evidence yet." />}</Section>
-    <Section title="History"><ul className="space-y-1 text-sm text-muted">{actions.map((a)=><li key={a.id}>{a.date} • {a.action}</li>)}</ul></Section>
+    <Section title="Momentum Map">{monthView.cells.every((day)=>!day || day.score===0)?<Empty text="No meaningful creative actions logged yet."/>:<><div className='rounded-xl border border-neon/30 bg-bg/30 p-3'><div className='mb-3 flex items-center justify-between'><p className='text-sm font-semibold text-amber-100'>{monthView.monthLabel}</p></div><div className='mb-2 grid grid-cols-7 gap-2 text-center text-xs text-neonDim'>{WEEKDAYS.map((label)=><p key={label}>{label}</p>)}</div><div className='grid grid-cols-7 gap-2'>{monthView.cells.map((day, idx)=>day ? <button key={day.date} title={`${day.date}: ${day.score} action score`} onClick={()=>setSelectedDate(day.date)} className={`h-12 rounded-lg border text-sm transition ${selectedDate===day.date ? 'border-amber-200 ring-1 ring-amber-200/80' : 'border-neon/20'} ${day.score>0 ? 'shadow-[0_0_14px_rgba(251,146,60,0.35)]' : ''}`} style={{ backgroundColor: day.score===0 ? '#111827' : day.score < 3 ? '#7c2d12' : day.score < 6 ? '#c2410c' : '#f59e0b', color: day.score > 5 ? '#111827' : '#fde68a' }}>{day.day}</button> : <div key={`empty-${idx}`} className='h-12 rounded-lg border border-transparent bg-transparent' />)}</div></div>{selectedDay?<div className='mt-3 rounded-xl border border-neon/30 bg-panelAlt/85 p-3 text-sm'><p className='font-medium text-amber-100'>{selectedDay.date}</p><p className='mt-1 text-muted'>Momentum score: <span className='text-amber-100'>{selectedDay.score}</span></p><ul className='mt-2 list-disc space-y-1 pl-5 text-muted'>{selectedDay.actions.length ? selectedDay.actions.map((a,idx)=><li key={`${selectedDay.date}-${idx}`}>{a}</li>) : <li>No meaningful actions logged.</li>}</ul></div>:null}</>}</Section>
+    <Section title="System Signals">{solarFlares.length ? <ul className="space-y-2 text-sm text-muted">{solarFlares.map((flare)=><li key={flare.id} className="rounded border border-neon/20 p-2"><p className="font-medium text-amber-100">{flare.title}</p><p>{flare.evidence.join(' ')}</p></li>)}</ul> : <Empty text="No repeatable flare evidence yet." />}</Section>
+    <Section title="History (collapsed)"><ul className="space-y-1 text-sm text-muted">{actions.map((a)=><li key={a.id}>{a.date} • {a.action}</li>)}</ul></Section>
   </Layout>;
 }
 

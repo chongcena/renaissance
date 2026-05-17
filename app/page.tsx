@@ -33,8 +33,8 @@ export default function HomePage() {
       <Stat title='Active Quests' value={`${activeQuests.length}`} />
     </section>
     <section className='grid gap-3 lg:grid-cols-2'>
-      <Panel title='Skill Tree Allocation'>{attention.map((b)=><div key={b.id} className='mb-2'><div className='flex justify-between text-xs'><span>{b.name}</span><span>{b.strategicWeight}% / {b.actual}%</span></div><div className='h-2 rounded bg-bg'><div className='h-2 rounded bg-amber-500' style={{width:`${b.actual}%`}}/></div></div>)}</Panel>
-      <Panel title='Inventory Signals'>{warnings.length ? warnings.slice(0,4).map((w)=><p key={w.sparkId} className='rounded border border-neon/20 p-2 text-sm'>{w.title} · {w.suggestedAction}</p>) : <p className='text-sm text-muted'>No cool down warnings.</p>}</Panel>
+      <Panel title='Branch Allocation'>{attention.map((b)=><div key={b.id} className='mb-2'><div className='flex justify-between text-xs'><span>{b.name}</span><span>{b.strategicWeight}% / {b.actual}%</span></div><div className='h-2 rounded bg-bg'><div className='h-2 rounded bg-amber-500' style={{width:`${b.actual}%`}}/></div></div>)}</Panel>
+      <Panel title='Vault Signals'>{warnings.length ? warnings.slice(0,4).map((w)=><p key={w.sparkId} className='rounded border border-neon/20 p-2 text-sm'>{w.title} · {w.suggestedAction}</p>) : <p className='text-sm text-muted'>No cool down warnings.</p>}</Panel>
     </section>
     <Panel title='System Signals'>{solarFlares.length ? solarFlares.map((f)=><p key={f.id} className='rounded border border-neon/20 p-2 text-sm'>{f.title} · {f.suggestedAction}</p>) : <p className='text-sm text-muted'>No system unlock signals detected.</p>}</Panel>
   </section></Layout>;
