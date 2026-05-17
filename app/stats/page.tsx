@@ -15,5 +15,5 @@ export default function StatsPage() {
 }
 
 function Panel({ title, items }: { title: string; items: { key: string; label: string }[] }) {
-  return <div className="rounded-xl border border-neon/20 bg-panelAlt p-4"><h3 className="text-sm uppercase tracking-widest text-neonDim">{title}</h3><ul className="mt-3 space-y-2 text-sm text-muted">{items.map((i) => <li key={i.key}>{i.label}</li>)}</ul></div>;
+  return <div className="rounded-xl border border-neon/40 bg-panelAlt/85 backdrop-blur-sm p-4"><h3 className="text-sm uppercase tracking-widest text-neonDim">{title}</h3><ul className="mt-3 space-y-2 text-sm text-muted">{items.map((i) => <li key={i.key}>{i.label}</li>)}</ul></div>;
 }
