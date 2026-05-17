@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const nav = [
-  ['Command', '/'],
+  ['Player Dashboard', '/'],
   ['Capture', '/add-spark'],
-  ['Vault', '/vault'],
-  ['Branches', '/branches'],
-  ['Stats', '/stats']
+  ['Inventory', '/vault'],
+  ['Skill Trees', '/branches'],
+  ['Progress Analytics', '/stats']
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -18,7 +18,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="mx-auto min-h-screen max-w-6xl px-4 pb-20 pt-4 sm:px-6">
       <header className="mb-6 rounded-2xl border border-neon/40 bg-panel/80 p-4 shadow-glow backdrop-blur">
         <p className="text-xs uppercase tracking-[0.35em] text-neonDim">Creative Momentum OS</p>
-        <h1 className="mt-2 text-2xl font-semibold">Creative Command Center</h1>
+        <h1 className="mt-2 text-2xl font-semibold">Player Dashboard / Command</h1>
         <nav className="mt-4 grid grid-cols-2 gap-2 text-sm sm:flex sm:flex-wrap">
           {nav.map(([label, href]) => {
             const active = pathname === href;
