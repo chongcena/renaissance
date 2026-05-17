@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { useStore } from '@/components/store';
-import type { SparkAttachmentType, Status } from '@/data/types';
+import type { SparkAttachmentType } from '@/data/types';
 
 type DraftAttachment = { name: string; type: SparkAttachmentType; mimeType?: string; size?: number; objectUrl?: string; textContent?: string; linkUrl?: string };
 
@@ -18,7 +18,6 @@ export default function CaptureSparkPage() {
   const [branchId, setBranchId] = useState(branches[0]?.id ?? '');
   const [notes, setNotes] = useState('');
   const [nextMove, setNextMove] = useState('');
-  const [status, setStatus] = useState<Status>('new');
   const [mode, setMode] = useState<(typeof modes)[number]>('Write Note');
   const [linkUrl, setLinkUrl] = useState('');
   const [attachment, setAttachment] = useState<DraftAttachment | null>(null);
@@ -34,7 +33,7 @@ export default function CaptureSparkPage() {
     const finalAttachment: DraftAttachment | null = mode === 'Write Note' && noteText ? { name: 'Note', type: 'note', textContent: noteText } : mode === 'Paste Link' && link ? { name: link, type: 'link', linkUrl: link } : attachment;
     const seedTitle = title.trim() || (finalAttachment?.type === 'image' ? 'Image Spark' : finalAttachment?.type === 'audio' ? 'Audio Spark' : finalAttachment?.type === 'video' ? 'Video Spark' : finalAttachment?.type === 'file' ? (finalAttachment.name || 'File Spark') : finalAttachment?.type === 'note' ? noteText.split(/\s+/).slice(0, 5).join(' ') || 'Note Spark' : finalAttachment?.type === 'link' ? (new URL(link).hostname.replace('www.', '') || 'Link Spark') : 'Link Spark');
     if (!seedTitle && !noteText && !link && !attachment) return;
-    const createdId = createSpark({ title: seedTitle, kind, branchId, notes: noteText, status, nextMove, attachments: finalAttachment ? [finalAttachment] : [] });
+    const createdId = createSpark({ title: seedTitle, kind, branchId, notes: noteText, nextMove, attachments: finalAttachment ? [finalAttachment] : [] });
     if (!createdId) return;
     router.push(`/spark/${createdId}`);
   };
@@ -51,6 +50,6 @@ export default function CaptureSparkPage() {
     {mode==='Upload Video' && <input type='file' accept='video/*' onChange={(e)=>onFile(e.target.files?.[0], 'video')} className='w-full text-sm'/>}
     {mode==='Upload File' && <input type='file' onChange={(e)=>onFile(e.target.files?.[0], 'file')} className='w-full text-sm'/>}
     {attachment && <div className='rounded border border-neon/30 p-3 text-sm'><p>{attachment.name}</p><p className='text-xs text-muted'>{attachment.mimeType || 'unknown'} • {attachment.size ? `${Math.round(attachment.size/1024)} KB` : 'size n/a'}</p>{attachment.type==='image'&&attachment.objectUrl?<img src={attachment.objectUrl} alt={attachment.name} className='mt-2 max-h-40 rounded'/>:null}{attachment.type==='audio'&&attachment.objectUrl?<audio controls src={attachment.objectUrl} className='mt-2 w-full'/>:null}{attachment.type==='video'&&attachment.objectUrl?<video controls src={attachment.objectUrl} className='mt-2 max-h-48 w-full rounded'/>:null}</div>}
-    <details><summary className='cursor-pointer text-sm text-neonDim'>Advanced</summary><div className='mt-2 grid gap-2'><select value={status} onChange={(e)=>setStatus(e.target.value as Status)} className='rounded bg-bg p-2'><option>new</option><option>active</option><option>cooling</option><option>frozen</option></select><input value={nextMove} onChange={(e)=>setNextMove(e.target.value)} className='rounded bg-bg p-2' placeholder='Next Move (optional)'/></div></details>
+    <details><summary className='cursor-pointer text-sm text-neonDim'>Advanced</summary><div className='mt-2 grid gap-2'><input value={nextMove} onChange={(e)=>setNextMove(e.target.value)} className='rounded bg-bg p-2' placeholder='Optional Next Move'/><p className='text-xs text-muted'>New Sparks default to stage Spark and status new.</p></div></details>
     <div className="flex gap-2"><button className="rounded-lg bg-neon px-4 py-2 font-semibold text-bg">Capture Spark</button><Link href="/vault" className="rounded-lg border border-neon/40 px-4 py-2 text-sm text-muted hover:border-neon/70 hover:text-text">Cancel</Link></div></form></section></Layout>;
 }

@@ -22,7 +22,7 @@ export function calculateHeatSignal(spark: SparkItem, context: LogicContext) {
   reasons.push(`Last touched ${staleDays} day(s) ago.`);
   if (spark.nextMove?.trim()) { score += 10; reasons.push('A clear next move exists.'); } else { score -= 8; reasons.push('No clear next move is defined yet.'); }
   if (sparkPaths.length > 0) { score += Math.min(10, sparkPaths.length * 3); reasons.push(`${sparkPaths.length} pathway option(s) exist.`); }
-  if (sparkPaths.some((p) => p.status === 'active')) { score += 8; reasons.push('At least one pathway is active.'); }
+  if (sparkPaths.some((p) => p.status === 'active' || p.status === 'chosen')) { score += 8; reasons.push('At least one pathway is active.'); }
   if (spark.stage === 'Fire' && spark.status === 'active') { score += 10; reasons.push('Active Fire assets are close to release momentum.'); }
   if (sparkBlazes.length > 0) { score += Math.min(12, sparkBlazes.length * 4); reasons.push(`Related Blaze history exists (${sparkBlazes.length}).`); }
   const valueTags = branch?.tags?.length ?? 0;
@@ -36,10 +36,10 @@ export function calculateHeatSignal(spark: SparkItem, context: LogicContext) {
 export function calculatePathwayReadiness(pathway: Pathway, spark: SparkItem, context: LogicContext) {
   const reasons: string[] = [];
   let score = 10;
-  if (pathway.lane?.trim()) { score += 20; reasons.push('Pathway has a clear title/lane.'); }
+  if (pathway.title?.trim()) { score += 20; reasons.push('Pathway has a clear title/lane.'); }
   if (pathway.status) { score += 10; reasons.push(`Pathway status is ${pathway.status}.`); }
   if (spark.stage === 'Ember' || spark.stage === 'Fire') { score += 15; reasons.push(`Spark stage ${spark.stage} supports pathway execution.`); }
-  if (pathway.status === 'active') { score += 20; reasons.push('Pathway is active/chosen.'); }
+  if (pathway.status === 'active' || pathway.status === 'chosen') { score += 20; reasons.push('Pathway is active/chosen.'); }
   if (context.branches.some((b) => b.id === spark.branchId)) { score += 10; reasons.push('Pathway belongs to an existing branch.'); }
   if (spark.nextMove?.trim()) { score += 10; reasons.push('Spark has a next move defined.'); }
   if (typeof pathway.confidence === 'number') { score += clamp(pathway.confidence) * 0.15; reasons.push(`Pathway heat/value signal contributes (${pathway.confidence}).`); }
@@ -47,7 +47,7 @@ export function calculatePathwayReadiness(pathway: Pathway, spark: SparkItem, co
   if (stale >= 7) { score -= 12; reasons.push(`Pathway has been untouched for ${stale} days.`); }
   score = clamp(Math.round(score));
   const label: ReadinessLabel = score >= 85 ? 'Active' : score >= 65 ? 'Strong' : score >= 40 ? 'Possible' : 'Weak';
-  const suggestedAction = !spark.nextMove?.trim() ? 'Set the next move this pathway should drive.' : pathway.status !== 'active' ? 'Choose this pathway or park it to reduce ambiguity.' : 'Execute the next move and log progress.';
+  const suggestedAction = !spark.nextMove?.trim() ? 'Set the next move this pathway should drive.' : (pathway.status !== 'active' && pathway.status !== 'chosen') ? 'Choose this pathway or park it to reduce ambiguity.' : 'Execute the next move and log progress.';
   return { score, label, reasons, suggestedAction };
 }
 
@@ -84,7 +84,7 @@ export function detectSolarFlares(sparks: SparkItem[], pathways: Pathway[], blaz
     const evidence: string[] = [];
     if (bSparks.length >= 2) evidence.push(`Repeated spark volume in ${branch.name} (${bSparks.length}).`);
     if (bBlazes.length >= 2) evidence.push(`Repeated blaze releases in ${branch.name} (${bBlazes.length}).`);
-    const names = pathways.filter((p) => bSparks.some((s) => s.id === p.sparkId)).map((p) => p.lane.trim().toLowerCase()).filter(Boolean);
+    const names = pathways.filter((p) => bSparks.some((s) => s.id === p.sparkId)).map((p) => p.title.trim().toLowerCase()).filter(Boolean);
     const repeatedLane = names.find((lane, i, arr) => arr.indexOf(lane) !== i);
     if (repeatedLane) evidence.push(`Repeated pathway lane pattern: ${repeatedLane}.`);
     const multiBlazeSpark = bSparks.find((s) => bBlazes.filter((b) => b.sparkId === s.id).length >= 2);
@@ -104,4 +104,14 @@ export function getMomentumStreakSummary(actions: ActionLog[]) {
   const today = new Date().toISOString().slice(0, 10);
   const todayActions = byDay.get(today) ?? [];
   return { currentStreak, countedToday: todayActions.length > 0, todayReasons: todayActions.map((a) => `${a.action_type}: ${a.action}`) };
+}
+
+export function deriveSparkLifecycle(spark: SparkItem, pathways: Pathway[], blazes: BlazeLog[]) {
+  const sparkPaths = pathways.filter((p) => p.sparkId === spark.id);
+  const sparkBlazes = blazes.filter((b) => b.sparkId === spark.id);
+  const activePath = sparkPaths.find((p) => p.status === 'active' || p.status === 'chosen');
+  if (sparkBlazes.length > 0) return { stage: 'Blaze' as const, reason: 'This Spark has released a Blaze.' };
+  if (activePath && (activePath.nextMove?.trim() || spark.nextMove?.trim())) return { stage: 'Fire' as const, reason: `This Spark is in Fire because ${activePath.title} is active and has a next move.` };
+  if (sparkPaths.length > 0 || (!!spark.branchId && spark.kind.trim())) return { stage: 'Ember' as const, reason: 'This Spark has routed potential. Choose the strongest pathway.' };
+  return { stage: 'Spark' as const, reason: 'This Spark has not been routed yet. Add one possible output lane.' };
 }

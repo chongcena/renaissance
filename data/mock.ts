@@ -16,8 +16,8 @@ export const spark_attachments: SparkAttachment[] = [
 ];
 
 export const pathways: Pathway[] = [
-  { id: 'pw-01', sparkId: 'sp-100', lane: 'Single release', confidence: 82, status: 'active', last_touched_at: '2026-05-15' },
-  { id: 'pw-02', sparkId: 'sp-101', lane: 'Newsletter series', confidence: 76, status: 'new', last_touched_at: '2026-05-13' }
+  { id: 'pw-01', sparkId: 'sp-100', title: 'Single release', outputType: 'single', confidence: 82, status: 'active', nextMove: 'Bounce final mix', valueTags: ['catalog'], last_touched_at: '2026-05-15' },
+  { id: 'pw-02', sparkId: 'sp-101', title: 'Newsletter series', outputType: 'essay', confidence: 76, status: 'possible', last_touched_at: '2026-05-13' }
 ];
 
 export const blaze_logs: BlazeLog[] = [
