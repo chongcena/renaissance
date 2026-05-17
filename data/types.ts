@@ -1,5 +1,6 @@
 export type Stage = 'Spark' | 'Ember' | 'Fire' | 'Blaze';
 export type Status = 'new' | 'active' | 'cooling' | 'frozen' | 'archived' | 'killed';
+export type PathwayStatus = 'possible' | 'chosen' | 'active' | 'completed' | 'frozen';
 
 export type BranchRole = 'Driver' | 'Audience Builder' | 'Strategic Flagship' | 'Maintenance' | 'Support';
 export type Branch = { id: string; name: string; focus: string; strategicWeight: number; role: BranchRole; frozen?: boolean; tags?: string[] };
@@ -32,8 +33,20 @@ export type SparkItem = {
   nextMove?: string;
 };
 
-export type Pathway = { id: string; sparkId: string; lane: string; confidence: number; status: Status; last_touched_at: string };
-export type BlazeLog = { id: string; title: string; branchId: string; releasedAt: string; sparkId: string };
+export type Pathway = {
+  id: string;
+  sparkId: string;
+  title: string;
+  outputType?: string;
+  confidence: number;
+  status: PathwayStatus;
+  branchId?: string;
+  nextMove?: string;
+  readinessNote?: string;
+  valueTags?: string[];
+  last_touched_at: string;
+};
+export type BlazeLog = { id: string; title: string; branchId: string; releasedAt: string; sparkId: string; outputType?: string; pathwayId?: string; notes?: string };
 export type ActionType = 'capture' | 'route' | 'create_pathway' | 'activate_fire' | 'progress' | 'set_next_move' | 'complete_move' | 'release' | 'create_blaze' | 'create_sun' | 'maintain_sun' | 'freeze' | 'kill' | 'archive';
 export type ActionLog = { id: string; action_type: ActionType; action: string; date: string; countsForStreak: boolean; branchId?: string; sparkId?: string };
 export type BurnerLedger = { id: string; event: string; reason: string; date: string; delta: number };
