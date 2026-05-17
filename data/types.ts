@@ -2,8 +2,21 @@ export type Stage = 'Spark' | 'Ember' | 'Fire' | 'Blaze';
 export type Status = 'new' | 'active' | 'cooling' | 'frozen' | 'archived' | 'killed';
 export type PathwayStatus = 'possible' | 'chosen' | 'active' | 'completed' | 'frozen';
 
+export type TimelineBucket = 'today' | 'this_week' | 'this_month' | 'later';
+
 export type BranchRole = 'Driver' | 'Audience Builder' | 'Strategic Flagship' | 'Maintenance' | 'Support';
-export type Branch = { id: string; name: string; focus: string; strategicWeight: number; role: BranchRole; frozen?: boolean; tags?: string[] };
+export type Branch = { id: string; name: string; focus: string; strategicWeight: number; role: BranchRole; frozen?: boolean; tags?: string[]; currentGoalId?: string };
+
+export type GoalStatus = 'active' | 'paused' | 'complete';
+export type Goal = {
+  id: string;
+  title: string;
+  pillarId: string;
+  status: GoalStatus;
+  timeline: TimelineBucket;
+  dueDate?: string;
+  currentObjective?: string;
+};
 
 export type SparkAttachmentType = 'image' | 'audio' | 'video' | 'file' | 'link' | 'note';
 export type SparkAttachment = {
@@ -24,6 +37,10 @@ export type SparkItem = {
   title: string;
   kind: string;
   branchId: string;
+  goalId?: string;
+  timeline?: TimelineBucket;
+  dueDate?: string;
+  currentObjective?: string;
   stage: Stage;
   status: Status;
   heatScore: number;

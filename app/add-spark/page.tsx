@@ -12,11 +12,14 @@ const modes = ['Write Note', 'Paste Link', 'Upload Image', 'Upload Audio', 'Uplo
 
 export default function CaptureSparkPage() {
   const router = useRouter();
-  const { branches, createSpark } = useStore();
+  const { branches, goals, createSpark } = useStore();
   const [title, setTitle] = useState('');
   const [kind, setKind] = useState('');
   const [branchId, setBranchId] = useState(branches[0]?.id ?? '');
   const [notes, setNotes] = useState('');
+  const [goalId, setGoalId] = useState('');
+  const [timeline, setTimeline] = useState<'today'|'this_week'|'this_month'|'later'|''>('');
+  const [currentObjective, setCurrentObjective] = useState('');
   const [nextMove, setNextMove] = useState('');
   const [mode, setMode] = useState<(typeof modes)[number] | ''>('');
   const [linkUrl, setLinkUrl] = useState('');
@@ -33,7 +36,7 @@ export default function CaptureSparkPage() {
     const finalAttachment: DraftAttachment | null = mode === 'Write Note' && noteText ? { name: 'Note', type: 'note', textContent: noteText } : mode === 'Paste Link' && link ? { name: link, type: 'link', linkUrl: link } : attachment;
     const seedTitle = title.trim() || (finalAttachment?.type === 'image' ? 'Image Spark' : finalAttachment?.type === 'audio' ? 'Audio Spark' : finalAttachment?.type === 'video' ? 'Video Spark' : finalAttachment?.type === 'file' ? (finalAttachment.name || 'File Spark') : finalAttachment?.type === 'note' ? noteText.split(/\s+/).slice(0, 5).join(' ') || 'Note Spark' : finalAttachment?.type === 'link' ? (new URL(link).hostname.replace('www.', '') || 'Link Spark') : 'Link Spark');
     if (!seedTitle && !noteText && !link && !attachment) return;
-    const createdId = createSpark({ title: seedTitle, kind, branchId, notes: noteText, nextMove, attachments: finalAttachment ? [finalAttachment] : [] });
+    const createdId = createSpark({ title: seedTitle, kind, branchId, goalId: goalId || undefined, timeline: timeline || undefined, currentObjective: currentObjective || undefined, notes: noteText, nextMove, attachments: finalAttachment ? [finalAttachment] : [] });
     if (!createdId) return;
     router.push(`/spark/${createdId}`);
   };
@@ -42,7 +45,10 @@ export default function CaptureSparkPage() {
   <form className="space-y-3 rounded-xl border border-neon/40 bg-panelAlt/85 p-4 backdrop-blur-sm" onSubmit={(e)=>{e.preventDefault();create();}}>
     <input value={title} onChange={(e)=>setTitle(e.target.value)} className="w-full rounded-lg border border-neon/40 bg-bg px-3 py-2" placeholder="Title (optional)" />
     <input value={kind} onChange={(e)=>setKind(e.target.value)} className="w-full rounded-lg border border-neon/40 bg-bg px-3 py-2" placeholder='Kind' />
-    <select value={branchId} onChange={(e)=>setBranchId(e.target.value)} className="w-full rounded-lg border border-neon/40 bg-bg px-3 py-2"><option value=''>No branch yet</option>{branches.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select>
+    <select value={branchId} onChange={(e)=>setBranchId(e.target.value)} className="w-full rounded-lg border border-neon/40 bg-bg px-3 py-2"><option value=''>No pillar yet</option>{branches.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select>
+    <select value={goalId} onChange={(e)=>setGoalId(e.target.value)} className="w-full rounded-lg border border-neon/40 bg-bg px-3 py-2"><option value=''>Optional goal</option>{goals.filter((g)=>!branchId || g.pillarId===branchId).map((g)=><option key={g.id} value={g.id}>{g.title}</option>)}</select>
+    <select value={timeline} onChange={(e)=>setTimeline(e.target.value as any)} className="w-full rounded-lg border border-neon/40 bg-bg px-3 py-2"><option value=''>Timeline bucket optional</option><option value='today'>Today</option><option value='this_week'>This Week</option><option value='this_month'>This Month</option><option value='later'>Later</option></select>
+    <input value={currentObjective} onChange={(e)=>setCurrentObjective(e.target.value)} className="w-full rounded-lg border border-neon/40 bg-bg px-3 py-2" placeholder='Current objective (optional)' />
     {mode==='Write Note' && <textarea value={notes} onChange={(e)=>setNotes(e.target.value)} className="h-24 w-full rounded-lg border border-neon/40 bg-bg px-3 py-2" placeholder="Capture your raw note..." />}
     {mode==='Paste Link' && <input value={linkUrl} onChange={(e)=>setLinkUrl(e.target.value)} className='w-full rounded-lg border border-neon/40 bg-bg px-3 py-2' placeholder='https://example.com/inspiration' />}
     {mode==='Upload Image' && <input type='file' accept='image/*' onChange={(e)=>onFile(e.target.files?.[0], 'image')} className='w-full text-sm'/>}
