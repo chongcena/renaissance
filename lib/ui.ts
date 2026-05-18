@@ -51,3 +51,14 @@ export function derivePriorityChip(spark: SparkItem, goals: Goal[]) {
   if ((linkedGoal?.scale === 'week' && linkedGoal.status === 'active') || spark.scheduleBucket === 'this_week' || (linkedGoal?.scale === 'month' && linkedGoal.status === 'active')) return 'Medium Priority';
   return 'Low Priority';
 }
+
+
+export const motionStyles = {
+  selectable: 'os-selectable',
+  activePulse: 'os-active-pulse',
+  emberPulse: 'os-ember-pulse',
+  flamePulse: 'os-flame-pulse',
+  frozen: 'os-frozen-shimmer',
+  selected: 'animate-[select-pop_180ms_ease-out_1]',
+  solar: 'os-solar-orbit',
+} as const;
