@@ -17,8 +17,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative mx-auto min-h-screen w-full max-w-7xl overflow-x-hidden px-4 py-4 sm:px-6">
-      <div className="pointer-events-none fixed inset-0 z-0 os-ambient-bg" aria-hidden="true" />
-      <div className="pointer-events-none fixed inset-0 z-0 os-grid-bg" aria-hidden="true" />
       <div className="relative z-10">
       <header className="mb-4 rounded-2xl border border-neon/15 bg-panel/75 px-4 py-3 backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-3">
