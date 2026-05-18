@@ -102,7 +102,7 @@ export default function SparkDetailPage() {
   };
 
   return <Layout>
-    <h2 className='text-xl font-semibold'>Asset Profile / Quest Hub</h2>
+    <h2 className='text-xl font-semibold'>Asset File</h2>
 
     <section className={`mt-3 rounded-xl border-2 bg-panelAlt/90 p-5 ${pillarStyle.border} ${spark.status === 'frozen' ? getFrozenStateClasses(true) : pillarStyle.glow} ${pillarStyle.softBg}`}>
       <p className='text-xs uppercase tracking-wide text-muted'>{spark.kind}</p>
