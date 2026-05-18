@@ -25,6 +25,15 @@ export const priorityChipStyles: Record<string, string> = {
   Frozen: 'border-cyan-300/50 bg-cyan-300/20 text-cyan-100',
 };
 
+export const sectionStyles = {
+  primary: 'rounded-xl border border-neon/45 bg-panelAlt/90 p-4 shadow-[0_0_18px_rgba(251,191,36,0.14)]',
+  active: 'rounded-xl border border-orange-300/40 bg-orange-950/15 p-4',
+  schedule: 'rounded-xl border border-cyan-300/30 bg-cyan-950/15 p-4',
+  analytics: 'rounded-xl border border-neon/25 bg-panelAlt/75 p-4',
+  support: 'rounded-xl border border-slate-400/25 bg-slate-900/25 p-4',
+  archive: 'rounded-xl border border-slate-500/20 bg-slate-950/30 p-4',
+} as const;
+
 export const getPriorityChipStyle = (priority: string) => priorityChipStyles[priority] ?? priorityChipStyles['Low Priority'];
 export const getPillarColor = (branch?: Branch): PillarColor => {
   if (branch?.color) return branch.color;

@@ -6,6 +6,40 @@ type ReadinessLabel = 'Weak' | 'Possible' | 'Strong' | 'Active';
 
 const clamp = (n: number, min = 0, max = 100) => Math.max(min, Math.min(max, n));
 const daysSince = (date: string) => Math.max(0, Math.floor((Date.now() - new Date(date).getTime()) / 86400000));
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+const addDays = (value: string, amount: number) => {
+  const date = new Date(`${value}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + amount);
+  return iso(date);
+};
+
+function getDateRange(startDate: string, endDate: string) {
+  const start = new Date(`${startDate}T00:00:00Z`);
+  const end = new Date(`${endDate}T00:00:00Z`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return [];
+  const [from, to] = start <= end ? [start, end] : [end, start];
+  const dates: string[] = [];
+  for (const cursor = new Date(from); cursor <= to; cursor.setUTCDate(cursor.getUTCDate() + 1)) dates.push(iso(cursor));
+  return dates;
+}
+
+export function getGoalScheduleDates(goal: Goal, todayIso = iso(new Date())) {
+  const dates = new Set<string>();
+  if (goal.startDate && goal.dueDate) getDateRange(goal.startDate, goal.dueDate).forEach((date) => dates.add(date));
+  else if (goal.dueDate) dates.add(goal.dueDate);
+  else if (goal.startDate) dates.add(goal.startDate);
+  if (goal.scheduleBucket === 'today') dates.add(todayIso);
+  if (goal.scheduleBucket === 'tomorrow') dates.add(addDays(todayIso, 1));
+  return [...dates];
+}
+
+export function getScheduledGoalsByDate(goals: Goal[], todayIso = iso(new Date())) {
+  const map = new Map<string, Goal[]>();
+  goals.forEach((goal) => {
+    getGoalScheduleDates(goal, todayIso).forEach((date) => map.set(date, [...(map.get(date) ?? []), goal]));
+  });
+  return map;
+}
 
 // Legacy helper retained for compatibility while heat logic is retired.
 export function calculateHeatSignal(spark: SparkItem, context: LogicContext) {
