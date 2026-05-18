@@ -4,6 +4,7 @@ import { useStore } from '@/components/store';
 import { useMemo, useState } from 'react';
 import { detectSolarFlares } from '@/lib/logic';
 import { getBranchAttention, getConversionData, getHeatCalendar, getStageCounts } from '@/lib/analytics';
+import { getPillarColor, getPillarColorStyles } from '@/lib/ui';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -45,7 +46,7 @@ export default function StatsPage() {
   const selectedDay = monthView.cells.find((d) => d && d.date === selectedDate) ?? null;
 
   return <Layout><h2 className="mb-4 text-2xl font-semibold tracking-tight">Progress</h2><section className='mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>{topCards.map(([label,val])=><article key={label} className='rounded-xl border border-neon/20 bg-panelAlt/80 p-3'><p className='text-xs uppercase tracking-widest text-neonDim'>{label}</p><p className='mt-1 text-2xl font-semibold text-amber-100'>{val}</p></article>)}</section>
-    <Section title="Pillar Focus">{attentionRouting.map((b)=><DualBar key={b.id} label={`${b.name} • ${b.status}`} planned={b.strategicWeight} actual={b.actual} />)}</Section>
+    <Section title="Pillar Focus">{attentionRouting.map((b)=>{ const st=getPillarColorStyles(getPillarColor(branches.find((br)=>br.id===b.id))); return <DualBar key={b.id} label={b.name} status={b.status} planned={b.strategicWeight} actual={b.actual} style={st} />;})}</Section>
     <Section title="Asset Flow"><div className="grid grid-cols-4 gap-2 text-center text-xs">{([{ label: 'Spark', key: 'Spark' }, { label: 'Ember', key: 'Ember' }, { label: 'Flame', key: 'Flame' }, { label: 'Blaze', key: 'Blaze' }] as const).map((item)=><div key={item.label} className="rounded border border-neon/20 p-2"><p className="text-neonDim">{item.label}</p><p className="text-xl font-semibold text-amber-100">{stageCounts[item.key]}</p></div>)}</div></Section>
     <Section title="Output Flow">{conversion.map((item)=><Bar key={item.name} label={`${item.name}: ${item.value}`} value={Math.round((item.value / Math.max(conversion[0].value,1))*100)} />)}</Section>
     <Section title="Released Output Types">{outputTypeMissing ? <Empty text="Release Blazes with output types to activate this chart." /> : <p className="text-sm text-muted">Output type data detected in released Blaze records.</p>}</Section>
@@ -60,4 +61,4 @@ export default function StatsPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) { return <section className="mb-3 rounded-xl border border-neon/40 bg-panelAlt/85 p-4"><h3 className="text-sm uppercase tracking-widest text-neonDim">{title}</h3><div className="mt-3 space-y-2">{children}</div></section>; }
 function Empty({ text }: { text: string }) { return <p className="rounded border border-neon/20 bg-bg/50 p-3 text-sm text-muted">{text}</p>; }
 function Bar({ label, value }: { label: string; value: number }) { return <div><div className="mb-1 flex justify-between text-sm"><span>{label}</span><span>{value}%</span></div><div className="h-2 rounded bg-bg"><div className="h-2 rounded bg-amber-500" style={{width:`${Math.min(100, value)}%`}} /></div></div>; }
-function DualBar({ label, planned, actual }: { label: string; planned: number; actual: number }) { return <div><p className="mb-1 text-sm">{label}</p><div className="relative h-3 rounded bg-bg"><div className="absolute h-3 rounded bg-amber-500/70" style={{width:`${planned}%`}} /><div className="absolute h-3 rounded bg-orange-400/80" style={{width:`${actual}%`}} /></div><p className="mt-1 text-xs text-muted">Planned {planned}% vs Actual {actual}%</p></div>; }
+function DualBar({ label, status, planned, actual, style }: { label: string; status: string; planned: number; actual: number; style: ReturnType<typeof getPillarColorStyles> }) { return <div className='rounded-lg border border-neon/20 bg-bg/20 p-2'><p className="mb-1 flex items-center gap-2 text-sm"><span className={`h-2 w-2 rounded-full ${style.dot}`}></span>{label}<span className='text-xs text-muted'>{status}</span></p><div className="relative h-3 rounded bg-bg"><div className="absolute h-3 rounded bg-slate-500/45" style={{width:`${planned}%`}} /><div className={`absolute h-3 rounded ${style.dot}`} style={{width:`${actual}%`}} /></div><p className="mt-1 text-xs text-muted">Planned {planned}% vs Actual {actual}%</p></div>; }
