@@ -44,6 +44,9 @@ export type SparkItem = {
   scheduleBucket?: TimelineBucket;
   dueDate?: string;
   currentAction?: string;
+  evolutionForm?: string;
+  evolutionPath?: string;
+  evolutionPurpose?: string;
   stage: Stage;
   status: Status;
   heatScore: number; // legacy field; no longer used for active priority logic
