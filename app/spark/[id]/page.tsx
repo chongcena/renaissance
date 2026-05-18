@@ -22,7 +22,7 @@ type AnalysisResult = {
 
 export default function SparkDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { branches, sparks, attachments, pathways, blazes, actions, addPathway, updatePathway, releaseBlaze, freezeSpark, updateSpark, updateSparkEvolution, addSparkAttachments, removeSparkAttachment, addActionLog } = useStore();
+  const { branches, sparks, attachments, pathways, blazes, actions, addPathway, updatePathway, releaseBlaze, updateSpark, updateSparkEvolution, addSparkAttachments, removeSparkAttachment, addActionLog } = useStore();
   const [currentActionInput, setNextMoveInput] = useState('');
   const [editing, setEditing] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
@@ -120,7 +120,7 @@ export default function SparkDetailPage() {
       <div className='mt-4 flex flex-wrap gap-2'>
         <button onClick={startEdit} className='rounded border border-neon/40 bg-bg px-3 py-1.5 text-xs'>Edit Asset</button>
         <button onClick={() => setFeedback('Use Current Action below to update focus.')} className='rounded border border-neon/40 bg-bg px-3 py-1.5 text-xs'>Set Action</button>
-        <button onClick={() => freezeSpark(spark.id)} className='rounded border border-neon/40 bg-bg px-3 py-1.5 text-xs'>{spark.status === 'frozen' ? 'Unfreeze' : 'Freeze'}</button>
+        <button type='button' onClick={() => updateSpark(spark.id, { status: spark.status === 'frozen' ? 'active' : 'frozen' })} className='rounded border border-neon/40 bg-bg px-3 py-1.5 text-xs'>{spark.status === 'frozen' ? 'Unfreeze' : 'Freeze'}</button>
       </div>
     </section>
 

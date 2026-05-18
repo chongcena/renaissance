@@ -54,31 +54,19 @@ body {
   background-image: radial-gradient(circle at 15% 0%, rgba(242, 159, 67, 0.15) 0%, transparent 38%), radial-gradient(circle at 85% 15%, rgba(217, 163, 74, 0.1) 0%, transparent 35%), linear-gradient(180deg, #09090c 0%, #050507 100%);
 }
 
-.os-shell {
-  position: relative;
-  isolation: isolate;
-}
-
-.os-shell::before,
-.os-shell::after {
-  content: '';
-  position: fixed;
-  inset: -10%;
-  pointer-events: none;
-  z-index: -2;
-}
-
-.os-shell::before {
+.os-ambient-bg {
   background: radial-gradient(circle at 18% 24%, rgba(96, 165, 250, 0.15), transparent 42%),
     radial-gradient(circle at 72% 16%, rgba(168, 85, 247, 0.14), transparent 38%),
     radial-gradient(circle at 68% 74%, rgba(34, 211, 238, 0.1), transparent 36%),
-    radial-gradient(circle at 26% 78%, rgba(251, 191, 36, 0.08), transparent 34%);
+    radial-gradient(circle at 26% 78%, rgba(251, 191, 36, 0.08), transparent 34%),
+    radial-gradient(ellipse at center, transparent 52%, rgba(2, 6, 23, 0.55) 100%);
   animation: os-drift 24s ease-in-out infinite;
 }
 
-.os-shell::after {
-  background: radial-gradient(ellipse at center, transparent 52%, rgba(2, 6, 23, 0.55) 100%);
-  z-index: -1;
+.os-grid-bg {
+  background-image: linear-gradient(rgba(242, 159, 67, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(242, 159, 67, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  animation: grid-breathe 18s ease-in-out infinite;
 }
 
 .grid-matrix {
