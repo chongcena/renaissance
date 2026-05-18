@@ -25,6 +25,24 @@ export const priorityChipStyles: Record<string, string> = {
   Frozen: 'border-cyan-300/50 bg-cyan-300/20 text-cyan-100',
 };
 
+
+export const motionStyles = {
+  selectable: 'os-selectable',
+  activePulse: 'os-active-pulse',
+  emberPulse: 'os-ember-pulse',
+  flamePulse: 'os-flame-pulse',
+  frozen: 'os-frozen-shimmer',
+  selected: 'animate-[select-pop_180ms_ease-out_1]',
+  solarOrbit: 'os-solar-orbit',
+} as const;
+
+export const getStageMotionClass = (stage: SparkItem['stage']) => {
+  if (stage === 'Spark') return 'os-active-pulse';
+  if (stage === 'Ember') return 'os-ember-pulse';
+  if (stage === 'Flame') return 'os-flame-pulse';
+  return '';
+};
+
 export const sectionStyles = {
   primary: 'rounded-xl border border-neon/45 bg-panelAlt/90 p-4 shadow-[0_0_18px_rgba(251,191,36,0.14)]',
   active: 'rounded-xl border border-orange-300/40 bg-orange-950/15 p-4',
