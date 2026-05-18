@@ -16,11 +16,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-7xl px-4 py-4 sm:px-6">
+    <div className="os-shell mx-auto min-h-screen w-full max-w-7xl px-4 py-4 sm:px-6">
       <header className="mb-4 rounded-2xl border border-neon/15 bg-panel/75 px-4 py-3 backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm font-semibold tracking-wide text-amber-100">Creative Momentum OS</p>
-          <Link href="/add-spark" className="rounded-lg bg-neon px-3 py-2 text-sm font-semibold text-bg">+ Capture</Link>
+          <Link href="/add-spark" className="os-selectable os-active-pulse rounded-lg bg-neon px-3 py-2 text-sm font-semibold text-bg">+ Capture</Link>
         </div>
         <nav className="mt-3 flex flex-wrap gap-2 text-sm">
           {nav.map((item) => {
@@ -29,9 +29,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.id}
                 href={item.href}
-                className={`rounded-lg px-3 py-1.5 transition ${
-                  active ? 'bg-neon/20 text-amber-100' : 'text-muted hover:bg-panelAlt/70 hover:text-text'
-                }`}
+                className={`os-selectable rounded-lg px-3 py-1.5 transition ${active ? 'bg-neon/20 text-amber-100 shadow-[0_0_14px_rgba(251,191,36,0.2)]' : 'text-muted hover:bg-panelAlt/70 hover:text-text'}`}
               >
                 {item.label}
               </Link>
