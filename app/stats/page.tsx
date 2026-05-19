@@ -2,7 +2,7 @@
 import Layout from '@/components/Layout';
 import { useStore } from '@/components/store';
 import { useMemo, useState } from 'react';
-import { detectSolarFlares, getGoalScheduleDates, getScheduledGoalsByDate } from '@/lib/logic';
+import { detectSolarFlares, getScheduledGoalDates, getScheduledGoalsByDate } from '@/lib/logic';
 import { getBranchAttention, getConversionData, getHeatCalendar, getStageCounts } from '@/lib/analytics';
 import { getPillarColor, getPillarColorStyles, motionStyles, sectionStyles } from '@/lib/ui';
 
@@ -23,7 +23,21 @@ export default function StatsPage() {
   const scheduledByDate = useMemo(() => getScheduledGoalsByDate(goals, todayIso), [goals, todayIso]);
   const todayScheduled = scheduledByDate.get(todayIso) ?? [];
   const tomorrowScheduled = scheduledByDate.get(tomorrowIso) ?? [];
-  const thisWeekScheduled = goals.filter((g) => g.scheduleBucket === 'this_week' || getGoalScheduleDates(g, todayIso).some((date) => { const d = new Date(`${date}T00:00:00Z`).getUTCDay(); const t = new Date(`${todayIso}T00:00:00Z`).getUTCDay(); const diff = (d - t + 7) % 7; return diff <= 6; }));
+  const thisWeekScheduled = goals.filter((g) => getScheduledGoalDates(g, todayIso).some((date) => {
+    const day = new Date(`${date}T00:00:00Z`).getTime();
+    const today = new Date(`${todayIso}T00:00:00Z`).getTime();
+    const diff = Math.floor((day - today) / 86400000);
+    return diff >= 0 && diff <= 6;
+  }));
+  const activeGoals = goals.filter((goal) => goal.status === 'active');
+  const completedGoals = goals.filter((goal) => goal.status === 'complete');
+  const dueTodayCount = goals.filter((goal) => goal.dueDate === todayIso && goal.status !== 'complete').length;
+  const dueThisWeekCount = goals.filter((goal) => getScheduledGoalDates(goal, todayIso).some((date) => {
+    const day = new Date(`${date}T00:00:00Z`).getTime();
+    const today = new Date(`${todayIso}T00:00:00Z`).getTime();
+    const diff = Math.floor((day - today) / 86400000);
+    return diff >= 0 && diff <= 6;
+  })).length;
 
   const topCards = [
     ['Total Assets', sparks.length],
@@ -61,6 +75,7 @@ export default function StatsPage() {
     <Section title="Pillar Focus">{attentionRouting.map((b)=>{ const st=getPillarColorStyles(getPillarColor(branches.find((br)=>br.id===b.id))); return <DualBar key={b.id} label={b.name} status={b.status} planned={b.strategicWeight} actual={b.actual} style={st} />;})}</Section>
     <Section title="Asset Flow"><div className="grid grid-cols-4 gap-2 text-center text-xs">{([{ label: 'Spark', key: 'Spark' }, { label: 'Ember', key: 'Ember' }, { label: 'Flame', key: 'Flame' }, { label: 'Blaze', key: 'Blaze' }] as const).map((item)=><div key={item.label} className="rounded border border-neon/20 p-2"><p className="text-neonDim">{item.label}</p><p className="text-xl font-semibold text-amber-100">{stageCounts[item.key]}</p></div>)}</div></Section>
     <Section title="Output Flow">{conversion.map((item)=><Bar key={item.name} label={`${item.name}: ${item.value}`} value={Math.round((item.value / Math.max(conversion[0].value,1))*100)} />)}</Section>
+    <Section title="Goal Progress">{activeGoals.length ? <div className='grid grid-cols-2 gap-2 text-sm sm:grid-cols-4'><StatCard label='Active Goals' value={activeGoals.length} /><StatCard label='Completed Goals' value={completedGoals.length} /><StatCard label='Due Today' value={dueTodayCount} /><StatCard label='Due This Week' value={dueThisWeekCount} /></div> : <Empty text="No active goals yet." />}</Section>
     <Section title="Released Output Types">{outputTypeMissing ? <Empty text="Release outputs to activate this chart." /> : <p className="text-sm text-muted">Output type data detected in released Blaze records.</p>}</Section>
     <Section title="Momentum Map">{monthView.cells.every((day)=>!day || day.score===0)?<Empty text="No meaningful creative actions logged yet."/>:<><div className='rounded-xl border border-neon/30 bg-bg/30 p-3'><div className='mb-3 flex items-center justify-between'><p className='text-sm font-semibold text-amber-100'>{monthView.monthLabel}</p></div><div className='mb-2 grid grid-cols-7 gap-2 text-center text-xs text-neonDim'>{WEEKDAYS.map((label)=><p key={label}>{label}</p>)}</div><div className='grid grid-cols-7 gap-2'>{monthView.cells.map((day, idx)=>day ? <button key={day.date} title={`${day.date}: ${day.score} action score`} onClick={()=>setSelectedDate(day.date)} className={`os-selectable h-12 rounded-lg border text-sm transition ${selectedDate===day.date ? 'border-amber-200 ring-1 ring-amber-200/80 animate-[select-pop_180ms_ease-out_1]' : 'border-neon/20'} ${day.date===todayIso ? 'os-active-pulse' : ''} ${day.score>0 ? 'shadow-[0_0_14px_rgba(251,146,60,0.35)]' : ''}`} style={{ backgroundColor: day.score===0 ? '#111827' : day.score < 3 ? '#7c2d12' : day.score < 6 ? '#c2410c' : '#f59e0b', color: day.score > 5 ? '#111827' : '#fde68a' }}>{day.day}</button> : <div key={`empty-${idx}`} className='h-12 rounded-lg border border-transparent bg-transparent' />)}</div></div>{selectedDay?<div className='mt-3 rounded-xl border border-neon/30 bg-panelAlt/85 p-3 text-sm'><p className='font-medium text-amber-100'>{selectedDay.date}</p><p className='mt-1 text-muted'>Momentum score: <span className='text-amber-100'>{selectedDay.score}</span></p><ul className='mt-2 list-disc space-y-1 pl-5 text-muted'>{selectedDay.actions.length ? selectedDay.actions.map((a,idx)=><li key={`${selectedDay.date}-${idx}`}>{a}</li>) : <li>No meaningful actions logged.</li>}</ul></div>:null}</>}</Section>
     <Section title="Upcoming Schedule" variant='schedule'>{scheduleGroups.map(({ label, list }) => <div key={label} className='rounded border border-neon/20 bg-bg/20 p-2'><p className='text-xs uppercase tracking-widest text-neonDim'>{label}</p>{list.length ? <ul className='mt-2 space-y-1'>{list.slice(0, 4).map((goal) => { const pillar = branches.find((b) => b.id === goal.pillarId); const st = getPillarColorStyles(getPillarColor(pillar)); return <li key={`${label}-${goal.id}`} className='text-sm'><p className='font-medium'>{goal.title}</p><span className={`inline-flex rounded-full border px-2 py-0.5 text-xs ${st.chip}`}>{pillar?.name ?? 'Pillar'}</span>{goal.currentAction ? <p className='text-xs text-neonDim'>Current Action: {goal.currentAction}</p> : null}<p className='text-xs text-muted'>{goal.dueDate ? `Due ${goal.dueDate}` : goal.scheduleBucket ?? 'No bucket'}</p></li>; })}</ul> : <p className='mt-2 text-xs text-muted'>No scheduled goals yet. Add dates or schedule buckets in Goals.</p>}</div>)}</Section>
@@ -73,3 +88,4 @@ function Section({ title, children, variant = 'analytics' }: { title: string; ch
 function Empty({ text }: { text: string }) { return <p className="rounded border border-neon/20 bg-bg/50 p-3 text-sm text-muted">{text}</p>; }
 function Bar({ label, value }: { label: string; value: number }) { return <div><div className="mb-1 flex justify-between text-sm"><span>{label}</span><span>{value}%</span></div><div className="h-2 rounded bg-bg"><div className="h-2 rounded bg-amber-500 transition-all duration-500 ease-out" style={{width:`${Math.min(100, value)}%`}} /></div></div>; }
 function DualBar({ label, status, planned, actual, style }: { label: string; status: string; planned: number; actual: number; style: ReturnType<typeof getPillarColorStyles> }) { return <div className='rounded-lg border border-neon/20 bg-bg/20 p-2'><p className="mb-1 flex items-center gap-2 text-sm"><span className={`h-2 w-2 rounded-full ${style.dot}`}></span>{label}<span className='text-xs text-muted'>{status}</span></p><div className="relative h-3 rounded bg-bg"><div className="absolute h-3 rounded bg-slate-500/45 transition-all duration-500 ease-out" style={{width:`${planned}%`}} /><div className={`absolute h-3 rounded ${style.dot} transition-all duration-500 ease-out`} style={{width:`${actual}%`}} /></div><p className="mt-1 text-xs text-muted">Planned {planned}% vs Actual {actual}%</p></div>; }
+function StatCard({ label, value }: { label: string; value: number }) { return <article className='rounded border border-neon/20 bg-bg/20 p-2'><p className='text-[11px] uppercase tracking-widest text-neonDim'>{label}</p><p className='text-lg font-semibold text-amber-100'>{value}</p></article>; }

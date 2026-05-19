@@ -1,19 +1,29 @@
 'use client';
 import Layout from '@/components/Layout';
 import { useStore } from '@/components/store';
-import { getMomentumStreakSummary } from '@/lib/logic';
+import { getMomentumStreakSummary, getScheduledGoalDates } from '@/lib/logic';
 import { derivePriorityChip, getPillarColor, getPillarColorStyles, getPriorityChipStyle, motionStyles } from '@/lib/ui';
 
 export default function HomePage() {
   const { sparks, actions, burners, goals, branches, blazes } = useStore();
   const streak = getMomentumStreakSummary(actions);
   const burnerBalance = burners.reduce((sum, b) => sum + b.delta, 0);
-  const todayGoal = goals.find((g) => g.scale === 'day' && g.status === 'active' && g.currentAction);
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const isScheduledToday = (goal: typeof goals[number]) => getScheduledGoalDates(goal, todayIso).includes(todayIso);
+  const todayGoal = goals.find((g) => g.scale === 'day' && g.status === 'active' && g.currentAction && isScheduledToday(g))
+    || goals.find((g) => g.status === 'active' && g.scheduleBucket === 'today' && g.currentAction)
+    || goals.find((g) => g.status === 'active' && g.dueDate === todayIso && g.currentAction);
   const todaySpark = sparks.find((s) => s.scheduleBucket === 'today' && s.currentAction && s.status !== 'frozen');
   const todayAction = todayGoal?.currentAction || todaySpark?.currentAction;
   const heroPriority = todaySpark ? derivePriorityChip(todaySpark, goals) : (todayGoal ? 'High Priority' : 'Low Priority');
   const heroStyle = getPillarColorStyles(getPillarColor(branches.find((b)=>b.id===todaySpark?.branchId || b.id===todayGoal?.pillarId)));
-  const upNextSparks = sparks.filter((s) => s.status === 'active' && s.currentAction && s.id !== todaySpark?.id).slice(0, 4);
+  const upNextGoals = goals.filter((g) => g.status === 'active' && g.currentAction && getScheduledGoalDates(g, todayIso).some((d) => {
+    const date = new Date(`${d}T00:00:00Z`).getTime();
+    const start = new Date(`${todayIso}T00:00:00Z`).getTime();
+    const diff = Math.floor((date - start) / 86400000);
+    return diff >= 0 && diff <= 6;
+  }) && g.id !== todayGoal?.id).slice(0, 4);
+  const upNextSparks = sparks.filter((s) => s.status === 'active' && s.currentAction && s.id !== todaySpark?.id && (s.scheduleBucket === 'today' || s.scheduleBucket === 'this_week' || s.scheduleBucket === 'tomorrow')).slice(0, 4);
   const cooling = sparks.filter((s) => s.status === 'cooling').slice(0, 4);
   const recentSparks = sparks.slice(0, 4);
   const pillar = branches.find((b)=>b.id===todaySpark?.branchId)?.name;
@@ -24,6 +34,8 @@ export default function HomePage() {
       <p className='text-xs uppercase tracking-[0.22em] text-neonDim'>Current Action</p>
       <p className='mt-3 text-2xl font-semibold text-amber-100'>{todayAction || 'No action locked. Choose a Day Goal or assign a Current Action.'}</p>
       <div className='mt-2 flex flex-wrap gap-2 text-xs'><span className={`rounded-full border px-2 py-0.5 ${getPriorityChipStyle(heroPriority)}`}>{heroPriority}</span>{pillar ? <span className={`rounded-full border px-2 py-0.5 ${heroStyle.chip}`}><span className={`mr-1 inline-block h-2 w-2 rounded-full ${heroStyle.dot}`}></span>{pillar}</span> : null}</div>{todaySpark ? <p className='mt-2 text-sm text-muted'>{todaySpark.title} • {todaySpark.stage}</p> : null}
+      {todayAction ? <p className='mt-2 text-xs uppercase tracking-widest text-cyan-200'>Today</p> : null}
+      {todayGoal ? <p className='mt-1 text-sm text-muted'>Goal: {todayGoal.title}</p> : null}
     </section>
     <div className='grid gap-3 sm:grid-cols-4'>
       <Stat title='Momentum' value={`${actions.filter((a) => a.countsForStreak).length}`} />
@@ -32,7 +44,7 @@ export default function HomePage() {
       <Stat title='Assets / Outputs' value={`${sparks.length}/${blazes.length}`} />
     </div>
     <div className='grid gap-3 lg:grid-cols-3'>
-      <Panel title='Up Next / This Week'>{upNextSparks.map((s)=><Item key={s.id} title={s.title} text={s.currentAction || ''} />)}</Panel>
+      <Panel title='Up Next / This Week'>{[...upNextGoals.map((g)=><Item key={`goal-${g.id}`} title={g.title} text={g.currentAction || ''} />), ...upNextSparks.map((s)=><Item key={`spark-${s.id}`} title={s.title} text={s.currentAction || ''} />)]}</Panel>
       <Panel title='Cooling'>{cooling.length ? cooling.map((s)=><Item key={s.id} title={s.title} text='Cooling' />) : <p className='text-xs text-muted'>No cooling assets.</p>}</Panel>
       <Panel title='Recent Sparks'>{recentSparks.map((s)=><Item key={s.id} title={s.title} text={s.stage} />)}</Panel>
     </div>

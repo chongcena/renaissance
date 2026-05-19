@@ -33,10 +33,27 @@ export function getGoalScheduleDates(goal: Goal, todayIso = iso(new Date())) {
   return [...dates];
 }
 
+export function getScheduledGoalDates(goal: Goal, todayDate = iso(new Date())) {
+  const dates = new Set<string>(getGoalScheduleDates(goal, todayDate));
+  if (goal.scheduleBucket === 'this_week') {
+    if (goal.startDate && goal.dueDate) getDateRange(goal.startDate, goal.dueDate).forEach((date) => dates.add(date));
+    else if (goal.startDate) dates.add(goal.startDate);
+    else {
+      const base = new Date(`${todayDate}T00:00:00Z`);
+      const weekday = base.getUTCDay();
+      const weekStart = new Date(base);
+      weekStart.setUTCDate(base.getUTCDate() - weekday);
+      for (let i = 0; i < 7; i += 1) dates.add(iso(new Date(Date.UTC(weekStart.getUTCFullYear(), weekStart.getUTCMonth(), weekStart.getUTCDate() + i))));
+    }
+  }
+  if (goal.scheduleBucket === 'this_month' && goal.dueDate) dates.add(goal.dueDate);
+  return [...dates];
+}
+
 export function getScheduledGoalsByDate(goals: Goal[], todayIso = iso(new Date())) {
   const map = new Map<string, Goal[]>();
   goals.forEach((goal) => {
-    getGoalScheduleDates(goal, todayIso).forEach((date) => map.set(date, [...(map.get(date) ?? []), goal]));
+    getScheduledGoalDates(goal, todayIso).forEach((date) => map.set(date, [...(map.get(date) ?? []), goal]));
   });
   return map;
 }
