@@ -22,7 +22,7 @@ type AnalysisResult = {
 
 export default function SparkDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { branches, sparks, attachments, pathways, blazes, actions, addPathway, updatePathway, releaseBlaze, updateSpark, updateSparkEvolution, addSparkAttachments, removeSparkAttachment, addActionLog } = useStore();
+  const { branches, sparks, attachments, pathways, blazes, actions, addPathway, updatePathway, releaseBlaze, updateSpark, updateSparkEvolution, addSparkAttachments, removeSparkAttachment, addActionLog, completeSparkCurrentAction } = useStore();
   const [currentActionInput, setNextMoveInput] = useState('');
   const [editing, setEditing] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
@@ -130,9 +130,10 @@ export default function SparkDetailPage() {
     <section className='mt-4 rounded-xl border border-neon/60 bg-panelAlt p-4'>
       <h4 className='text-sm font-semibold uppercase tracking-wide text-neon'>Current Action</h4>
       <p className='mt-2 text-sm'>{spark.currentAction || 'No Current Action set yet.'}</p>
-      <div className='mt-3 flex gap-2'>
-        <input value={currentActionInput} onChange={(e) => setNextMoveInput(e.target.value)} placeholder='Record rough vocals / Clean linework / Export print file...' className='flex-1 rounded bg-bg p-2' />
+      <div className='mt-3 flex flex-wrap gap-2'>
+        <input value={currentActionInput} onChange={(e) => setNextMoveInput(e.target.value)} placeholder='Record rough vocals / Clean linework / Export print file...' className='min-w-[240px] flex-1 rounded bg-bg p-2' />
         <button className='rounded bg-neon px-3 text-bg' onClick={() => { if (currentActionInput.trim()) { updateSpark(spark.id, { currentAction: currentActionInput.trim() }); setFeedback(`Set Action: ${currentActionInput.trim()}`); setNextMoveInput(''); } }}>{spark.currentAction ? 'Update Action' : 'Set Action'}</button>
+        {spark.currentAction ? <button className='rounded border border-emerald-300/60 px-3 text-emerald-100' onClick={() => { const next = window.prompt('Next Current Action (optional):', ''); completeSparkCurrentAction(spark.id, next ?? undefined); setFeedback('Completed Current Action.'); }}>Complete Current Action</button> : null}
       </div>
     </section>
 

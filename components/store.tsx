@@ -16,6 +16,8 @@ type Store = {
   updateSparkEvolution: (sparkId: string, payload: { evolutionForm: string; evolutionPath: string; evolutionPurpose: string; currentAction: string }) => void; addSparkAttachments: (sparkId: string, payload: Omit<SparkAttachment, 'id' | 'sparkId' | 'createdAt'>[]) => void; removeSparkAttachment: (attachmentId: string) => void; addPathway: (sparkId: string, lane: string, extra?: Partial<Pathway>) => void; updatePathway: (id: string, patch: Partial<Pathway>) => void;
   releaseBlaze: (sparkId: string, title: string, outputType: string, pathwayId?: string, notes?: string) => void;
   addActionLog: (action_type: ActionLog['action_type'], action: string, countsForStreak?: boolean, meta?: { branchId?: string; sparkId?: string }) => void;
+  completeSparkCurrentAction: (sparkId: string, nextCurrentAction?: string) => void;
+  completeGoalCurrentAction: (goalId: string, nextCurrentAction?: string) => void;
 };
 const Ctx = createContext<Store | null>(null);
 const today = () => new Date().toISOString().slice(0, 10);
@@ -44,7 +46,27 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     updatePathway: (pid, patch) => { const path=paths.find((p)=>p.id===pid); setPaths((p)=>{ const target=p.find((x)=>x.id===pid); if(!target) return p; const choosing = patch.status === 'chosen'; return p.map((i)=>{ if(choosing && i.sparkId===target.sparkId && i.id!==pid && i.status==='chosen') return {...i,status:'possible',last_touched_at:today()}; if(i.id===pid) return {...i,...patch,last_touched_at:today()}; return i; }); }); if(patch.currentAction!==undefined) appendAction('set_next_move',`Set Current Action: ${patch.currentAction || 'Cleared Current Action'}`); appendAction('progress',`Updated Pathway: ${path?.title ?? pid}`); },
     releaseBlaze: (sparkId,title,outputType,pathwayId,notes) => { const spark=sparks.find((s)=>s.id===sparkId); if(!spark) return; setBlazes((b)=>[{id:id('blz'),sparkId,title,outputType,pathwayId,notes,branchId:spark.branchId,releasedAt:today()},...b]); if(pathwayId){setPaths((p)=>p.map((x)=>x.id===pathwayId?{...x,status:'completed',last_touched_at:today()}:x));}
       const outputCount = blazes.filter((b)=>b.sparkId===sparkId).length + 1; setSparks((s)=>s.map((x)=>x.id===sparkId?{...x,stage:outputCount>=2?'Blaze':'Flame',status:'active',updatedAt:today(),last_touched_at:today()}:x)); setBurners((b)=>[{id:id('bn'),event:'Earned',reason:`Released Output: ${title}`,date:today(),delta:1},...b]); appendAction('release',`Released Output: ${title}`,true,{sparkId,branchId:spark.branchId}); appendAction('create_blaze',`Released Output Log: ${title} (${outputType})`,true,{sparkId,branchId:spark.branchId}); }
-    , addActionLog: (action_type, action, countsForStreak = true, meta) => appendAction(action_type, action, countsForStreak, meta)
+    , addActionLog: (action_type, action, countsForStreak = true, meta) => appendAction(action_type, action, countsForStreak, meta),
+    completeSparkCurrentAction: (sparkId, nextCurrentAction) => {
+      const spark = sparks.find((s) => s.id === sparkId);
+      if (!spark?.currentAction?.trim()) return;
+      const completed = spark.currentAction.trim();
+      const next = nextCurrentAction?.trim();
+      setSparks((s)=>s.map((item)=>item.id===sparkId?{...item,currentAction:next || undefined,updatedAt:today(),last_touched_at:today(),status:item.status==='new'?'active':item.status}:item));
+      appendAction('complete_move', `Completed Current Action: ${completed}`, true, { sparkId, branchId: spark.branchId });
+      appendAction('progress', `Momentum update: ${spark.title}`, true, { sparkId, branchId: spark.branchId });
+      if (next) appendAction('set_next_move', `Set Current Action: ${next}`, true, { sparkId, branchId: spark.branchId });
+    },
+    completeGoalCurrentAction: (goalId, nextCurrentAction) => {
+      const goal = goals.find((g) => g.id === goalId);
+      if (!goal?.currentAction?.trim()) return;
+      const completed = goal.currentAction.trim();
+      const next = nextCurrentAction?.trim();
+      setGoals((g)=>g.map((item)=>item.id===goalId?{...item,currentAction:next || undefined,status:item.status==='paused'?'active':item.status}:item));
+      appendAction('complete_move', `Completed Current Action: ${completed}`, true, { branchId: goal.pillarId });
+      appendAction('progress', `Momentum update: ${goal.title}`, true, { branchId: goal.pillarId });
+      if (next) appendAction('set_next_move', `Set Current Action: ${next}`, true, { branchId: goal.pillarId });
+    }
   }), [branches, goals, sparks, attachments, paths, blazes, actions, burners]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
